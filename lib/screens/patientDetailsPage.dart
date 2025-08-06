@@ -186,29 +186,32 @@ class _PatientDetailsState extends State<PatientDetails> {
             spacing: 20,
             runSpacing: -8,
             children: previousHistoryOptions.map((option) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: selectedHistory.contains(option),
-                    activeColor: Colors.red,
-                    visualDensity: const VisualDensity(
-                      horizontal: -4,
-                      vertical: -4,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      value: selectedHistory.contains(option),
+                      activeColor: Colors.red,
+                      visualDensity: const VisualDensity(
+                        horizontal: -4,
+                        vertical: -4,
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true) {
+                            selectedHistory.add(option);
+                          } else {
+                            selectedHistory.remove(option);
+                          }
+                        });
+                      },
                     ),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    onChanged: (val) {
-                      setState(() {
-                        if (val == true) {
-                          selectedHistory.add(option);
-                        } else {
-                          selectedHistory.remove(option);
-                        }
-                      });
-                    },
-                  ),
-                  Text(option, style: const TextStyle(fontSize: 13)),
-                ],
+                    Text(option, style: const TextStyle(fontSize: 13)),
+                  ],
+                ),
               );
             }).toList(),
           ),

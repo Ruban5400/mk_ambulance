@@ -5,6 +5,7 @@ import 'package:mk_ambulance/screens/patientDetailsPage.dart';
 import '../constants/step_tiles.dart';
 import '../widgets/buttons.dart';
 import '../widgets/stepper_widget.dart';
+import 'AssessmentPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,7 +38,7 @@ class _HomePageState extends State<HomePage> {
       case 0:
         return const PatientDetails();
       case 1:
-      // return assessmentPage();
+      return const AssessmentPage();
       case 2:
       // return treatmentPage();
       case 3:
