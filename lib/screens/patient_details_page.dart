@@ -253,14 +253,17 @@ class _PatientDetailsState extends State<PatientDetails> {
     );
   }
 
+
   @override
   void initState() {
     super.initState();
-    Provider.of<PatientFormProvider>(context, listen: false)
-        .updateField('patient_entry_date', selectedDate);
-    Provider.of<PatientFormProvider>(context, listen: false)
-        .updateField('patient_entry_time', selectedTime);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<PatientFormProvider>(context, listen: false);
+      provider.updateField('patient_entry_date', selectedDate);
+      provider.updateField('patient_entry_time', selectedTime);
+    });
   }
+
 
   @override
   Widget build(BuildContext context) {
