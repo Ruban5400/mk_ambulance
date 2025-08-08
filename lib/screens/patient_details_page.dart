@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/patient_form_data.dart';
 
 class PatientDetails extends StatefulWidget {
   const PatientDetails({super.key});
@@ -18,8 +21,14 @@ class _PatientDetailsState extends State<PatientDetails> {
   final nricController = TextEditingController();
   final dobController = TextEditingController();
   final ageController = TextEditingController();
-  String selectedGender = "Male";
+  String selectedGender = "";
   final complaintController = TextEditingController();
+  final allergiesController = TextEditingController();
+  final medicationController = TextEditingController();
+  final nursesNotesController = TextEditingController();
+
+
+
   Map<String, Set<String>> primarySurveySelections = {
     "Airway": {},
     "Breathing": {},
@@ -33,6 +42,7 @@ class _PatientDetailsState extends State<PatientDetails> {
     'Connectica ZEN CLIENT',
   ];
 
+
   Future<void> pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -43,6 +53,10 @@ class _PatientDetailsState extends State<PatientDetails> {
     if (picked != null) {
       setState(() {
         selectedDate = picked;
+        Provider.of<PatientFormProvider>(
+          context,
+          listen: false,
+        ).updateField('patient_entry_date', selectedDate);
       });
     }
   }
@@ -55,6 +69,10 @@ class _PatientDetailsState extends State<PatientDetails> {
     if (picked != null) {
       setState(() {
         selectedTime = picked;
+        Provider.of<PatientFormProvider>(
+          context,
+          listen: false,
+        ).updateField('patient_entry_time', selectedTime);
       });
     }
   }
@@ -71,6 +89,10 @@ class _PatientDetailsState extends State<PatientDetails> {
         dob = picked;
         dobController.text =
             "${dob!.day.toString().padLeft(2, '0')}-${dob!.month.toString().padLeft(2, '0')}-${dob!.year}";
+        Provider.of<PatientFormProvider>(
+          context,
+          listen: false,
+        ).updateField('patient_dob', dobController.text);
       });
     }
   }
@@ -103,6 +125,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                       } else {
                         primarySurveySelections[title]!.remove(option);
                       }
+                      Provider.of<PatientFormProvider>(context, listen: false)
+                          .updateField('primary_survey', primarySurveySelections);
                     });
                   },
                 ),
@@ -136,14 +160,14 @@ class _PatientDetailsState extends State<PatientDetails> {
           const SizedBox(height: 15),
           _buildTextField(
             "Allergies",
-            TextEditingController(),
+            allergiesController,
             "List known allergies",
             maxLines: 3,
           ),
           const SizedBox(height: 15),
           _buildTextField(
             "Medication",
-            TextEditingController(),
+            medicationController,
             "List current medications",
             maxLines: 3,
           ),
@@ -206,6 +230,8 @@ class _PatientDetailsState extends State<PatientDetails> {
                           } else {
                             selectedHistory.remove(option);
                           }
+                          Provider.of<PatientFormProvider>(context, listen: false)
+                              .updateField('previous_history', selectedHistory);
                         });
                       },
                     ),
@@ -218,13 +244,22 @@ class _PatientDetailsState extends State<PatientDetails> {
           const SizedBox(height: 15),
           _buildTextField(
             "Nurse's Notes",
-            TextEditingController(),
+            nursesNotesController,
             "Additional notes from the nurse...",
             maxLines: 3,
           ),
         ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Provider.of<PatientFormProvider>(context, listen: false)
+        .updateField('patient_entry_date', selectedDate);
+    Provider.of<PatientFormProvider>(context, listen: false)
+        .updateField('patient_entry_time', selectedTime);
   }
 
   @override
@@ -271,8 +306,13 @@ class _PatientDetailsState extends State<PatientDetails> {
                           activeColor: Colors.red,
                           value: type,
                           groupValue: referralType,
-                          onChanged: (val) =>
-                              setState(() => referralType = val!),
+                          onChanged: (val) => setState(() {
+                            referralType = val!;
+                            Provider.of<PatientFormProvider>(
+                              context,
+                              listen: false,
+                            ).updateField('referral_type', referralType);
+                          }),
                         ),
                         Text(type),
                       ],
@@ -367,7 +407,11 @@ class _PatientDetailsState extends State<PatientDetails> {
                           activeColor: Colors.red,
                           groupValue: selectedGender,
                           onChanged: (val) =>
-                              setState(() => selectedGender = val!),
+                              setState(() {
+                                selectedGender = val!;
+                                Provider.of<PatientFormProvider>(context, listen: false)
+                                    .updateField('patient_gender', selectedGender);
+                              } ),
                         ),
                         Text(gender),
                       ],
@@ -391,6 +435,10 @@ class _PatientDetailsState extends State<PatientDetails> {
                       borderSide: BorderSide.none,
                     ),
                   ),
+                  onChanged: (val){
+                    Provider.of<PatientFormProvider>(context, listen: false)
+                        .updateField('chief_complain', val);
+                  },
                 ),
               ],
             ),
@@ -519,6 +567,12 @@ class _PatientDetailsState extends State<PatientDetails> {
             fillColor: Colors.grey.shade100,
             border: const OutlineInputBorder(borderSide: BorderSide.none),
           ),
+          onChanged: (value) {
+            Provider.of<PatientFormProvider>(
+              context,
+              listen: false,
+            ).updateField(label, value);
+          },
         ),
       ],
     );
