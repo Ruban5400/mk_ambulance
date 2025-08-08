@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/patient_form_data.dart';
 import '../widgets/signature.dart';
 
 class SignOffPage extends StatefulWidget {
@@ -12,8 +14,18 @@ class SignOffPage extends StatefulWidget {
 }
 
 class _SignOffPageState extends State<SignOffPage> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController icController = TextEditingController();
+  final TextEditingController patientNameController = TextEditingController();
+  final TextEditingController patientIcController = TextEditingController();
+  final TextEditingController staffNameController = TextEditingController();
+  final TextEditingController staffIcController = TextEditingController();
+  final TextEditingController endorsedNameController = TextEditingController();
+  final TextEditingController receivedNameController = TextEditingController();
+  DateTime endorsedDate = DateTime.now();
+  TimeOfDay endorsedTime = TimeOfDay.now();
+  DateTime receivedDate = DateTime.now();
+  TimeOfDay receivedTime = TimeOfDay.now();
+
+
 
   Map<String, bool> options = {
     'REFERRAL LETTER': false,
@@ -27,7 +39,7 @@ class _SignOffPageState extends State<SignOffPage> {
 
   final dateFormat = DateFormat('dd-MM-yyyy');
 
-  Future<void> _pickDate() async {
+  Future<void> _pickDate(String label) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -38,11 +50,13 @@ class _SignOffPageState extends State<SignOffPage> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
+        Provider.of<PatientFormProvider>(context, listen: false)
+            .updateField(label, picked);
       });
     }
   }
 
-  Future<void> _pickTime() async {
+  Future<void> _pickTime(String label) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: selectedTime,
@@ -51,6 +65,8 @@ class _SignOffPageState extends State<SignOffPage> {
     if (picked != null && picked != selectedTime) {
       setState(() {
         selectedTime = picked;
+        Provider.of<PatientFormProvider>(context, listen: false)
+            .updateField(label, picked);
       });
     }
   }
@@ -66,6 +82,14 @@ class _SignOffPageState extends State<SignOffPage> {
             onChanged: (bool? value) {
               setState(() {
                 options[label] = value ?? false;
+                // Store only selected (true) options
+                final selectedDocuments = options.entries
+                    .where((e) => e.value)
+                    .map((e) => e.key)
+                    .toList();
+
+                Provider.of<PatientFormProvider>(context, listen: false)
+                    .updateField('documents_provided', selectedDocuments);
               });
             },
             shape: RoundedRectangleBorder(
@@ -159,7 +183,10 @@ class _SignOffPageState extends State<SignOffPage> {
                             fieldName: "Patient Signature",
                             formValues: {},
                             onChanged: (signature) {
-                              setState(() {});
+                              setState(() {
+                                Provider.of<PatientFormProvider>(context, listen: false)
+                                    .updateField('patient_signature', signature);
+                              });
                             },
                           ),
                         ),
@@ -172,7 +199,11 @@ class _SignOffPageState extends State<SignOffPage> {
                       ),
                       const SizedBox(height: 6),
                       TextField(
-                        controller: nameController,
+                        controller: patientNameController,
+                        onChanged: (value){
+                          Provider.of<PatientFormProvider>(context, listen: false)
+                              .updateField('patient_name', value);
+                        },
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey.shade200,
@@ -186,7 +217,11 @@ class _SignOffPageState extends State<SignOffPage> {
                       ),
                       const SizedBox(height: 6),
                       TextField(
-                        controller: icController,
+                        controller: patientIcController,
+                        onChanged: (value){
+                          Provider.of<PatientFormProvider>(context, listen: false)
+                              .updateField('patient_ic_no', value);
+                        },
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey.shade200,
@@ -237,10 +272,13 @@ class _SignOffPageState extends State<SignOffPage> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: SignatureField(
-                            fieldName: "Patient Signature",
+                            fieldName: "Staff Signature",
                             formValues: {},
                             onChanged: (signature) {
-                              setState(() {});
+                              setState(() {
+                                  Provider.of<PatientFormProvider>(context, listen: false)
+                                      .updateField('staff_signature', signature);
+                              });
                             },
                           ),
                         ),
@@ -253,7 +291,11 @@ class _SignOffPageState extends State<SignOffPage> {
                       ),
                       const SizedBox(height: 6),
                       TextField(
-                        controller: nameController,
+                        controller: staffNameController,
+                        onChanged: (value){
+                          Provider.of<PatientFormProvider>(context, listen: false)
+                              .updateField('staff_name', value);
+                        },
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey.shade200,
@@ -267,7 +309,11 @@ class _SignOffPageState extends State<SignOffPage> {
                       ),
                       const SizedBox(height: 6),
                       TextField(
-                        controller: icController,
+                        controller: staffIcController,
+                        onChanged: (value){
+                          Provider.of<PatientFormProvider>(context, listen: false)
+                              .updateField('staff_ic_no', value);
+                        },
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey.shade200,
@@ -332,7 +378,11 @@ class _SignOffPageState extends State<SignOffPage> {
                 ),
                 const SizedBox(height: 6),
                 TextField(
-                  controller: nameController,
+                  controller: endorsedNameController,
+                  onChanged: (value){
+                    Provider.of<PatientFormProvider>(context, listen: false)
+                        .updateField('endorsed_by_name', value);
+                  },
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey.shade200,
@@ -355,7 +405,10 @@ class _SignOffPageState extends State<SignOffPage> {
                       fieldName: "ENDORSED BY",
                       formValues: {},
                       onChanged: (signature) {
-                        setState(() {});
+                        setState(() {
+                            Provider.of<PatientFormProvider>(context, listen: false)
+                                .updateField('endorsed_by_signature', signature);
+                        });
                       },
                     ),
                   ),
@@ -372,7 +425,9 @@ class _SignOffPageState extends State<SignOffPage> {
                           const Text('Date', style: TextStyle(fontWeight: FontWeight.w500)),
                           const SizedBox(height: 8),
                           GestureDetector(
-                            onTap: _pickDate,
+                            onTap: (){
+                              _pickDate('endorsedDate');
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                               decoration: BoxDecoration(
@@ -400,7 +455,9 @@ class _SignOffPageState extends State<SignOffPage> {
                           const Text('Time', style: TextStyle(fontWeight: FontWeight.w500)),
                           const SizedBox(height: 8),
                           GestureDetector(
-                            onTap: _pickTime,
+                            onTap: (){
+                              _pickTime('endorsedTime');
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                               decoration: BoxDecoration(
@@ -449,7 +506,11 @@ class _SignOffPageState extends State<SignOffPage> {
                 ),
                 const SizedBox(height: 6),
                 TextField(
-                  controller: nameController,
+                  controller: receivedNameController,
+                  onChanged: (value) {
+                    Provider.of<PatientFormProvider>(context, listen: false)
+                        .updateField('received_by_name', value);
+                  },
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey.shade200,
@@ -472,7 +533,10 @@ class _SignOffPageState extends State<SignOffPage> {
                       fieldName: "RECEIVED BY",
                       formValues: {},
                       onChanged: (signature) {
-                        setState(() {});
+                        setState(() {
+                            Provider.of<PatientFormProvider>(context, listen: false)
+                                .updateField('received_by_signature', signature);
+                        });
                       },
                     ),
                   ),
@@ -489,7 +553,9 @@ class _SignOffPageState extends State<SignOffPage> {
                           const Text('Date', style: TextStyle(fontWeight: FontWeight.w500)),
                           const SizedBox(height: 8),
                           GestureDetector(
-                            onTap: _pickDate,
+                            onTap: (){
+                              _pickDate('receivedDate');
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                               decoration: BoxDecoration(
@@ -517,7 +583,9 @@ class _SignOffPageState extends State<SignOffPage> {
                           const Text('Time', style: TextStyle(fontWeight: FontWeight.w500)),
                           const SizedBox(height: 8),
                           GestureDetector(
-                            onTap: _pickTime,
+                            onTap: (){
+                              _pickTime('receivedTime');
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                               decoration: BoxDecoration(
