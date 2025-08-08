@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/patient_form_data.dart';
 
 class TreatmentPage extends StatefulWidget {
   const TreatmentPage({super.key});
@@ -9,6 +12,7 @@ class TreatmentPage extends StatefulWidget {
 }
 
 class _TreatmentPageState extends State<TreatmentPage> {
+
   final Map<String, bool> treatmentOptions = {
     'NO TREATMENT / ADVICE ONLY GIVEN': false,
     'REST-ICE-COMPRESS-ELEVATE': false,
@@ -64,6 +68,16 @@ class _TreatmentPageState extends State<TreatmentPage> {
                 onChanged: (value) {
                   setState(() {
                     options[entry.key] = value!;
+
+                    // Only collect keys where the value is true
+                    final selectedOptions = options.entries
+                        .where((e) => e.value == true)
+                        .map((e) => e.key)
+                        .toList();
+
+                    // Update only if true
+                    Provider.of<PatientFormProvider>(context, listen: false)
+                        .updateField(title, selectedOptions);
                   });
                 },
                 shape: RoundedRectangleBorder(
@@ -115,6 +129,10 @@ class _TreatmentPageState extends State<TreatmentPage> {
         const SizedBox(height: 6),
         TextField(
           controller: controller,
+          onChanged: (value){
+            Provider.of<PatientFormProvider>(context, listen: false)
+                .updateField(label, value.trim());
+          },
           maxLines: maxLines,
           keyboardType: [
             'General Condition',
@@ -168,6 +186,8 @@ class _TreatmentPageState extends State<TreatmentPage> {
                               groupValue: conditionStatus,
                               onChanged: (val) {
                                 setState(() => conditionStatus = val);
+                                Provider.of<PatientFormProvider>(context, listen: false)
+                                    .updateField("Condition Status", val);
                               },
                               activeColor: Colors.red.shade800,
                             ),
@@ -199,14 +219,22 @@ class _TreatmentPageState extends State<TreatmentPage> {
             children: [
               Checkbox(
                 value: deathChecked,
-                onChanged: (val) => setState(() => deathChecked = val!),
+                onChanged: (val) {
+                  setState(() => deathChecked = val!);
+                  Provider.of<PatientFormProvider>(context, listen: false)
+                      .updateField("Death", val);
+                },
                 activeColor: Colors.red.shade800,
               ),
               const Text("Death"),
               const SizedBox(width: 20),
               Checkbox(
                 value: othersChecked,
-                onChanged: (val) => setState(() => othersChecked = val!),
+                onChanged: (val) {
+                  setState(() => othersChecked = val!);
+                  Provider.of<PatientFormProvider>(context, listen: false)
+                      .updateField("Others", val);
+                },
                 activeColor: Colors.red.shade800,
               ),
               const Text("Others"),
