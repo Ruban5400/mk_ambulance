@@ -1,0 +1,1026 @@
+// new code with data when navigating
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:signature/signature.dart';
+import '../providers/patient_form_data.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'dart:ui' as ui;
+
+class AssessmentPage extends StatefulWidget {
+  const AssessmentPage({super.key});
+
+  @override
+  State<AssessmentPage> createState() => _AssessmentPageState();
+}
+
+class _AssessmentPageState extends State<AssessmentPage> {
+  final GlobalKey _signatureBoundaryKeyFront = GlobalKey();
+  final GlobalKey _signatureBoundaryKeyBack = GlobalKey();
+  // Changed to 'late' to allow deferred initialization with provider data
+  late SignatureController frontController;
+  late SignatureController backController;
+
+  bool isFront = true;
+  bool _isLoading = true;
+
+  Future<void> _saveSignatureToProvider({required bool isFront}) async {
+    RenderRepaintBoundary boundary = isFront
+        ? _signatureBoundaryKeyFront.currentContext!.findRenderObject()
+              as RenderRepaintBoundary
+        : _signatureBoundaryKeyBack.currentContext!.findRenderObject()
+              as RenderRepaintBoundary;
+    ui.Image image = await boundary.toImage();
+    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List? data = byteData?.buffer.asUint8List();
+
+    final fieldName = isFront ? 'front_side' : 'back_side';
+
+    if (data != null) {
+      Provider.of<PatientFormProvider>(
+        context,
+        listen: false,
+      ).updateField(fieldName, data);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Signature for $fieldName saved to form.')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    frontController.dispose();
+    backController.dispose();
+    super.dispose();
+  }
+
+  final DateFormat formatter = DateFormat('dd-MM-yyyy HH:mm');
+
+  List<String> columns = ['Arrival', 'Handover'];
+  Map<String, List<TextEditingController>> fieldControllers = {};
+
+  final List<String> fieldNames = [
+    'DATE/TIME',
+    'RESPIRATORY RATE',
+    'PULSE RATE',
+    'SPO2',
+    'BLOOD PRESSURE',
+    'BLOOD GLUCOSE',
+    'TEMPERATURE',
+    'PAIN SCORE',
+    'GCS',
+    'PUPIL SIZE (mm)',
+    'PUPIL REACTION',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    final provider = Provider.of<PatientFormProvider>(context, listen: false);
+    final existingObservations = provider.observations;
+
+    // Initialize controllers with either existing points or an empty list
+    frontController = SignatureController(
+      penStrokeWidth: 3,
+      penColor: Colors.red,
+      exportBackgroundColor: Colors.transparent,
+      // points: existingFrontPoints ?? [],
+    );
+    backController = SignatureController(
+      penStrokeWidth: 3,
+      penColor: Colors.blue,
+      exportBackgroundColor: Colors.transparent,
+      // points: existingBackPoints ?? [],
+    );
+
+    int maxColumns = 0;
+    if (existingObservations.isNotEmpty) {
+      final validLists = existingObservations.values.whereType<List>();
+      if (validLists.isNotEmpty) {
+        maxColumns = validLists
+            .map((list) => list.length)
+            .reduce((a, b) => a > b ? a : b);
+      }
+    }
+
+    if (maxColumns > 0) {
+      if (maxColumns > 2) {
+        columns = [
+          'Arrival',
+          ...List.generate(maxColumns - 2, (index) => 'Intermediate'),
+          'Handover',
+        ];
+      } else {
+        columns = ['Arrival', 'Handover'];
+      }
+
+      for (var field in fieldNames) {
+        final savedValues = existingObservations[field] ?? [];
+        fieldControllers[field] = List.generate(maxColumns, (colIndex) {
+          final controller = TextEditingController();
+          if (colIndex < savedValues.length) {
+            controller.text = savedValues[colIndex];
+          }
+          return controller;
+        });
+      }
+    } else {
+      for (var field in fieldNames) {
+        fieldControllers[field] = List.generate(
+          columns.length,
+          (_) => TextEditingController(
+            text: field == 'DATE/TIME' ? formatter.format(DateTime.now()) : '',
+          ),
+        );
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  void addIntermediateColumn() {
+    setState(() {
+      columns.insert(columns.length - 1, 'Intermediate');
+      for (var field in fieldNames) {
+        fieldControllers[field]!.insert(
+          columns.length - 2,
+          TextEditingController(),
+        );
+      }
+    });
+  }
+
+  Widget buildFieldRow(String label, List<TextEditingController> controllers) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ...controllers.asMap().entries.map((entry) {
+            int colIndex = entry.key;
+            TextEditingController controller = entry.value;
+            return Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: TextFormField(
+                  controller: controller,
+                  onChanged: (value) {
+                    Provider.of<PatientFormProvider>(
+                      context,
+                      listen: false,
+                    ).updateObservationField(
+                      fieldName: label,
+                      index: colIndex,
+                      value: value.trim(),
+                    );
+                  },
+                  readOnly: label == 'DATE/TIME',
+                  keyboardType:
+                      [
+                        'RESPIRATORY RATE',
+                        'PULSE RATE',
+                        'SPO2',
+                        'BLOOD PRESSURE',
+                        'BLOOD GLUCOSE',
+                        'TEMPERATURE',
+                        'PAIN SCORE',
+                        'GCS',
+                        'PUPIL SIZE (mm)',
+                      ].contains(label.toUpperCase().trim())
+                      ? TextInputType.number
+                      : TextInputType.text,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    suffixText: label == 'SPO2'
+                        ? '%'
+                        : label == 'TEMPERATURE'
+                        ? '°C'
+                        : label == 'PAIN SCORE'
+                        ? '/10'
+                        : null,
+                    suffixIcon: label == 'DATE/TIME'
+                        ? IconButton(
+                            icon: const Icon(Icons.calendar_today, size: 16),
+                            onPressed: () async {
+                              final now = DateTime.now();
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: now,
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2100),
+                              );
+                              if (date != null) {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.fromDateTime(now),
+                                );
+                                if (time != null) {
+                                  final selected = DateTime(
+                                    date.year,
+                                    date.month,
+                                    date.day,
+                                    time.hour,
+                                    time.minute,
+                                  );
+                                  controller.text = formatter.format(selected);
+                                  Provider.of<PatientFormProvider>(
+                                    context,
+                                    listen: false,
+                                  ).updateObservationField(
+                                    fieldName: label,
+                                    index: colIndex,
+                                    value: controller.text,
+                                  );
+                                }
+                              }
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 10,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<PatientFormProvider>(context, listen: false);
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1000),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
+              border: Border.all(color: Colors.grey, width: 1.0),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SIGN OF SYMPTOMS',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // FRONT VIEW
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Front View',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (provider.patientDetails['front_side'] !=
+                                null) ...[
+                              Image.memory(
+                                provider.patientDetails['front_side'],
+                                fit: BoxFit.contain,
+                                height: 400,
+                              ),
+                            ] else ...[
+                              RepaintBoundary(
+                                key: _signatureBoundaryKeyFront,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/front.png',
+                                      width: double.infinity,
+                                      height: 300,
+                                      fit: BoxFit.contain,
+                                    ),
+                                    Positioned.fill(
+                                      child: Signature(
+                                        controller: frontController,
+                                        backgroundColor: Colors.transparent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      provider.patientDetails['front_side'] =
+                                      null;
+                                    });
+
+                                    frontController.clear();
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Clear'),
+                                ),
+                                const SizedBox(width: 10),
+                                ElevatedButton.icon(
+                                  onPressed: () =>
+                                      _saveSignatureToProvider(isFront: true),
+                                  icon: const Icon(Icons.save),
+                                  label: const Text('Save'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+
+                    // BACK VIEW
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Back View',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (provider.patientDetails['back_side'] !=
+                                null) ...[
+                              Image.memory(
+                                provider.patientDetails['back_side'],
+                                fit: BoxFit.contain,
+                                height: 400,
+                              ),
+                            ] else ...[
+                              RepaintBoundary(
+                                key: _signatureBoundaryKeyBack,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/back.png',
+                                      width: double.infinity,
+                                      height: 300,
+                                      fit: BoxFit.contain,
+                                    ),
+                                    Positioned.fill(
+                                      child: Signature(
+                                        controller: backController,
+                                        backgroundColor: Colors.transparent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      provider.patientDetails['back_side'] =
+                                      null;
+                                    });
+
+                                    backController.clear();
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Clear'),
+                                ),
+                                const SizedBox(width: 10),
+                                ElevatedButton.icon(
+                                  onPressed: () =>
+                                      _saveSignatureToProvider(isFront: false),
+                                  icon: const Icon(Icons.save),
+                                  label: const Text('Save'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Container(
+                //   padding: const EdgeInsets.all(15),
+                //   decoration: BoxDecoration(
+                //     border: Border.all(color: Colors.grey.shade400),
+                //     borderRadius: BorderRadius.circular(10),
+                //   ),
+                //   child: Column(
+                //     children: [
+                //       Row(
+                //         children: [
+                //           Text(
+                //             showFront ? 'Front View' : 'Back View',
+                //             style: GoogleFonts.poppins(
+                //               fontSize: 18,
+                //               fontWeight: FontWeight.w600,
+                //             ),
+                //           ),
+                //           const Spacer(),
+                //           TextButton.icon(
+                //             onPressed: toggleView,
+                //             icon: const Icon(Icons.flip),
+                //             label: Text(showFront ? "Show Back" : "Show Front"),
+                //           ),
+                //         ],
+                //       ),
+                //       // if(provider.patientDetails['front_side'] == null)
+                //       RepaintBoundary(
+                //         key: _signatureBoundaryKey,
+                //         child: Stack(
+                //           alignment: Alignment.center,
+                //           children: [
+                //             Image.asset(
+                //               showFront
+                //                   ? 'assets/images/front.png'
+                //                   : 'assets/images/back.png',
+                //               width: double.infinity,
+                //               height: 500,
+                //               fit: BoxFit.contain,
+                //             ),
+                //             Positioned.fill(
+                //               child: Signature(
+                //                 controller: showFront
+                //                     ? frontController
+                //                     : backController,
+                //                 backgroundColor: Colors.transparent,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ),
+                //       const SizedBox(height: 10),
+                //       Row(
+                //         children: [
+                //           ElevatedButton.icon(
+                //             onPressed: () {
+                //               (showFront ? frontController : backController)
+                //                   .clear();
+                //             },
+                //             icon: const Icon(Icons.refresh),
+                //             label: const Text('Clear Drawing'),
+                //           ),
+                //           const SizedBox(width: 10),
+                //           ElevatedButton.icon(
+                //             onPressed: _saveSignatureToProvider,
+                //             icon: const Icon(Icons.save),
+                //             label: const Text('Save to Form'),
+                //           ),
+                //         ],
+                //       ),
+                //     ],
+                //   ),
+                // ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
+              border: Border.all(color: Colors.grey, width: 1.0),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'OBSERVATION',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (columns.length < 5)
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade700,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: addIntermediateColumn,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Intermediate'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    const Expanded(flex: 2, child: SizedBox()),
+                    ...columns.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      String col = entry.value;
+
+                      return Expanded(
+                        flex: 3,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              col.toUpperCase(),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (col == 'Intermediate')
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 18),
+                                tooltip: 'Remove',
+                                onPressed: () {
+                                  setState(() {
+                                    columns.removeAt(index);
+                                    for (var field in fieldNames) {
+                                      fieldControllers[field]!.removeAt(index);
+                                    }
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+                const Divider(thickness: 1),
+                for (var field in fieldNames)
+                  buildFieldRow(field, fieldControllers[field]!),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// old code working fine without showing data when navigating
+// import 'dart:typed_data';
+// import 'package:flutter/material.dart';
+// import 'package:google_fonts/google_fonts.dart';
+// import 'package:intl/intl.dart';
+// import 'package:provider/provider.dart';
+// import 'package:signature/signature.dart';
+// import '../providers/patient_form_data.dart';
+// import 'package:flutter/foundation.dart'; // For kIsWeb
+// import 'dart:io' if (dart.library.js_interop) 'dart:js_interop';
+// import 'package:flutter/rendering.dart';
+// import 'dart:ui' as ui; // For ui.Image
+
+//
+// class AssessmentPage extends StatefulWidget {
+//   const AssessmentPage({super.key});
+//
+//   @override
+//   State<AssessmentPage> createState() => _AssessmentPageState();
+// }
+//
+// class _AssessmentPageState extends State<AssessmentPage> {
+//   final GlobalKey _signatureBoundaryKey = GlobalKey();
+//   final SignatureController frontController = SignatureController(
+//     penStrokeWidth: 3,
+//     penColor: Colors.red,
+//     exportBackgroundColor: Colors.transparent,
+//   );
+//
+//   final SignatureController backController = SignatureController(
+//     penStrokeWidth: 3,
+//     penColor: Colors.blue,
+//     exportBackgroundColor: Colors.transparent,
+//   );
+//
+//   bool showFront = true;
+//
+//   void toggleView() {
+//     setState(() => showFront = !showFront);
+//   }
+//
+//   // Modified to store the image data in the provider instead of saving to a file.
+//   Future<void> _saveSignatureToProvider() async {
+//     RenderRepaintBoundary boundary =
+//     _signatureBoundaryKey.currentContext!.findRenderObject()
+//     as RenderRepaintBoundary;
+//     ui.Image image = await boundary.toImage();
+//     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+//     final Uint8List? data = byteData?.buffer.asUint8List();
+//
+//     final fieldName = showFront ? 'front_side' : 'back_side';
+//
+//     if (data != null) {
+//       Provider.of<PatientFormProvider>(
+//         context,
+//         listen: false,
+//       ).updateField(fieldName, data);
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text('Signature for $fieldName saved to form.')),
+//       );
+//     }
+//   }
+//
+//   @override
+//   void dispose() {
+//     frontController.dispose();
+//     backController.dispose();
+//     super.dispose();
+//   }
+//
+//   final DateFormat formatter = DateFormat('dd-MM-yyyy HH:mm');
+//
+//   // Header columns
+//   List<String> columns = ['Arrival', 'Handover'];
+//   Map<String, List<TextEditingController>> fieldControllers = {};
+//
+//   final List<String> fieldNames = [
+//     'DATE/TIME',
+//     'RESPIRATORY RATE',
+//     'PULSE RATE',
+//     'SPO2',
+//     'BLOOD PRESSURE',
+//     'BLOOD GLUCOSE',
+//     'TEMPERATURE',
+//     'PAIN SCORE',
+//     'GCS',
+//     'PUPIL SIZE (mm)',
+//     'PUPIL REACTION',
+//   ];
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     for (var field in fieldNames) {
+//       fieldControllers[field] = List.generate(
+//         columns.length,
+//             (_) => TextEditingController(
+//           text: field == 'DATE/TIME' ? formatter.format(DateTime.now()) : '',
+//         ),
+//       );
+//     }
+//   }
+//
+//   void addIntermediateColumn() {
+//     setState(() {
+//       columns.insert(columns.length - 1, 'Intermediate');
+//       for (var field in fieldNames) {
+//         fieldControllers[field]!.insert(
+//           columns.length - 2,
+//           TextEditingController(),
+//         );
+//       }
+//     });
+//   }
+//
+//   Widget buildFieldRow(String label, List<TextEditingController> controllers) {
+//     return Padding(
+//       padding: const EdgeInsets.symmetric(vertical: 8.0),
+//       child: Row(
+//         children: [
+//           // Field name
+//           Expanded(
+//             flex: 2,
+//             child: Text(
+//               label,
+//               style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+//             ),
+//           ),
+//           const SizedBox(width: 8),
+//           // Dynamic columns
+//           ...controllers.asMap().entries.map((entry) {
+//             int colIndex = entry.key;
+//             TextEditingController controller = entry.value;
+//             return Expanded(
+//               flex: 3,
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(horizontal: 4),
+//                 child: TextFormField(
+//                   controller: controller,
+//                   onChanged: (value) {
+//                     Provider.of<PatientFormProvider>(
+//                       context,
+//                       listen: false,
+//                     ).updateObservationField(
+//                       fieldName: label,
+//                       index: colIndex,
+//                       value: value.trim(),
+//                     );
+//                   },
+//                   readOnly: label == 'DATE/TIME',
+//                   keyboardType:
+//                   [
+//                     'RESPIRATORY RATE',
+//                     'PULSE RATE',
+//                     'SPO2',
+//                     'BLOOD PRESSURE',
+//                     'BLOOD GLUCOSE',
+//                     'TEMPERATURE',
+//                     'PAIN SCORE',
+//                     'GCS',
+//                     'PUPIL SIZE (mm)',
+//                   ].contains(label.toUpperCase().trim())
+//                       ? TextInputType.number
+//                       : TextInputType.text,
+//                   decoration: InputDecoration(
+//                     filled: true,
+//                     fillColor: Colors.grey[200],
+//                     suffixText: label == 'SPO2'
+//                         ? '%'
+//                         : label == 'TEMPERATURE'
+//                         ? '°C'
+//                         : label == 'PAIN SCORE'
+//                         ? '/10'
+//                         : null,
+//                     suffixIcon: label == 'DATE/TIME'
+//                         ? IconButton(
+//                       icon: const Icon(Icons.calendar_today, size: 16),
+//                       onPressed: () async {
+//                         final now = DateTime.now();
+//                         final date = await showDatePicker(
+//                           context: context,
+//                           initialDate: now,
+//                           firstDate: DateTime(2000),
+//                           lastDate: DateTime(2100),
+//                         );
+//                         if (date != null) {
+//                           final time = await showTimePicker(
+//                             context: context,
+//                             initialTime: TimeOfDay.fromDateTime(now),
+//                           );
+//                           if (time != null) {
+//                             final selected = DateTime(
+//                               date.year,
+//                               date.month,
+//                               date.day,
+//                               time.hour,
+//                               time.minute,
+//                             );
+//                             controller.text = formatter.format(selected);
+//                           }
+//                         }
+//                       },
+//                     )
+//                         : null,
+//                     border: OutlineInputBorder(
+//                       borderRadius: BorderRadius.circular(6.0),
+//                       borderSide: BorderSide.none,
+//                     ),
+//                     contentPadding: const EdgeInsets.symmetric(
+//                       vertical: 12,
+//                       horizontal: 10,
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             );
+//           }),
+//         ],
+//       ),
+//     );
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return ConstrainedBox(
+//       constraints: const BoxConstraints(maxWidth: 1000),
+//       child: Column(
+//         children: [
+//           Container(
+//             width: double.infinity,
+//             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+//             decoration: BoxDecoration(
+//               borderRadius: const BorderRadius.all(Radius.circular(10)),
+//               border: Border.all(color: Colors.grey, width: 1.0),
+//             ),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   'SIGN OF SYMPTOMS',
+//                   style: GoogleFonts.poppins(
+//                     fontSize: 20,
+//                     fontWeight: FontWeight.w600,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 20),
+//                 Container(
+//                   padding: const EdgeInsets.all(15),
+//                   decoration: BoxDecoration(
+//                     border: Border.all(color: Colors.grey.shade400),
+//                     borderRadius: BorderRadius.circular(10),
+//                   ),
+//                   child: Column(
+//                     children: [
+//                       Row(
+//                         children: [
+//                           Text(
+//                             showFront ? 'Front View' : 'Back View',
+//                             style: GoogleFonts.poppins(
+//                               fontSize: 18,
+//                               fontWeight: FontWeight.w600,
+//                             ),
+//                           ),
+//                           const Spacer(),
+//                           TextButton.icon(
+//                             onPressed: toggleView,
+//                             icon: const Icon(Icons.flip),
+//                             label: Text(showFront ? "Show Back" : "Show Front"),
+//                           ),
+//                         ],
+//                       ),
+//                       RepaintBoundary(
+//                         key: _signatureBoundaryKey,
+//                         child: Stack(
+//                           alignment: Alignment.center,
+//                           children: [
+//                             Image.asset(
+//                               showFront
+//                                   ? 'assets/images/front.png'
+//                                   : 'assets/images/back.png',
+//                               width: double.infinity,
+//                               height: 500,
+//                               fit: BoxFit.contain,
+//                             ),
+//                             Positioned.fill(
+//                               child: Signature(
+//                                 controller: showFront
+//                                     ? frontController
+//                                     : backController,
+//                                 backgroundColor: Colors.transparent,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                       const SizedBox(height: 10),
+//                       Row(
+//                         children: [
+//                           ElevatedButton.icon(
+//                             onPressed: () {
+//                               (showFront ? frontController : backController)
+//                                   .clear();
+//                             },
+//                             icon: const Icon(Icons.refresh),
+//                             label: const Text('Clear Drawing'),
+//                           ),
+//                           const SizedBox(width: 10),
+//                           ElevatedButton.icon(
+//                             onPressed: _saveSignatureToProvider,
+//                             icon: const Icon(Icons.save),
+//                             label: const Text('Save to Form'),
+//                           ),
+//                         ],
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           SizedBox(height: 20),
+//           Container(
+//             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+//             decoration: BoxDecoration(
+//               borderRadius: const BorderRadius.all(Radius.circular(10)),
+//               border: Border.all(color: Colors.grey, width: 1.0),
+//             ),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 // Header
+//                 Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: [
+//                     Text(
+//                       'OBSERVATION',
+//                       style: GoogleFonts.poppins(
+//                         fontSize: 20,
+//                         fontWeight: FontWeight.w600,
+//                       ),
+//                     ),
+//                     if (columns.length < 5)
+//                       ElevatedButton.icon(
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: Colors.red.shade700,
+//                           foregroundColor: Colors.white,
+//                         ),
+//                         onPressed: addIntermediateColumn,
+//                         icon: const Icon(Icons.add),
+//                         label: const Text('Add Intermediate'),
+//                       ),
+//                   ],
+//                 ),
+//                 const SizedBox(height: 20),
+//                 // Table header
+//                 Row(
+//                   children: [
+//                     const Expanded(
+//                       flex: 2,
+//                       child: SizedBox(),
+//                     ), // Empty space for labels
+//                     ...columns.asMap().entries.map((entry) {
+//                       int index = entry.key;
+//                       String col = entry.value;
+//
+//                       return Expanded(
+//                         flex: 3,
+//                         child: Row(
+//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                           children: [
+//                             Text(
+//                               col.toUpperCase(),
+//                               style: GoogleFonts.poppins(
+//                                 fontWeight: FontWeight.bold,
+//                                 fontSize: 14,
+//                               ),
+//                             ),
+//                             if (col == 'Intermediate')
+//                               IconButton(
+//                                 icon: const Icon(Icons.close, size: 18),
+//                                 tooltip: 'Remove',
+//                                 onPressed: () {
+//                                   setState(() {
+//                                     columns.removeAt(index);
+//                                     for (var field in fieldNames) {
+//                                       fieldControllers[field]!.removeAt(index);
+//                                     }
+//                                   });
+//                                 },
+//                               ),
+//                           ],
+//                         ),
+//                       );
+//                     }),
+//                   ],
+//                 ),
+//                 const Divider(thickness: 1),
+//                 // Rows
+//                 for (var field in fieldNames)
+//                   buildFieldRow(field, fieldControllers[field]!),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
