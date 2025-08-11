@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -9,7 +12,10 @@ class PatientDetailsForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use a Consumer to listen for changes to the entire form data, including signatures
-    final data = Provider.of<PatientFormProvider>(context, listen: false).patientDetails;
+    final data = Provider.of<PatientFormProvider>(
+      context,
+      listen: false,
+    ).patientDetails;
 
     data.forEach((key, value) {
       print('$key : $value');
@@ -55,7 +61,10 @@ class PatientDetailsForm extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 20,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.all(Radius.circular(10)),
                   border: Border.all(color: Colors.grey, width: 1.0),
@@ -67,10 +76,19 @@ class PatientDetailsForm extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildInfoRow('Name:', details['Name'].toString()),
-                          _buildInfoRow('NRIC Number:', details['NRIC Number'].toString()),
-                          _buildInfoRow('Date of Birth:', details['patient_dob'].toString()),
+                          _buildInfoRow(
+                            'NRIC Number:',
+                            details['NRIC Number'].toString(),
+                          ),
+                          _buildInfoRow(
+                            'Date of Birth:',
+                            details['patient_dob'].toString(),
+                          ),
                           _buildInfoRow('Age:', details['Age'].toString()),
-                          _buildInfoRow('Gender:', details['patient_gender'].toString()),
+                          _buildInfoRow(
+                            'Gender:',
+                            details['patient_gender'].toString(),
+                          ),
                         ],
                       ),
                     ),
@@ -78,10 +96,24 @@ class PatientDetailsForm extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildInfoRow('Date:', _getSafeDatePart(details['patient_entry_date']?.toString())),
-                          _buildInfoRow('Time:', details['patient_entry_time'].toString()),
-                          _buildInfoRow('Referral Type:', details['referral_type'].toString()),
-                          _buildInfoRow('Location:', details['Location'].toString()),
+                          _buildInfoRow(
+                            'Date:',
+                            _getSafeDatePart(
+                              details['patient_entry_date']?.toString(),
+                            ),
+                          ),
+                          _buildInfoRow(
+                            'Time:',
+                            details['patient_entry_time'].toString(),
+                          ),
+                          _buildInfoRow(
+                            'Referral Type:',
+                            details['referral_type'].toString(),
+                          ),
+                          _buildInfoRow(
+                            'Location:',
+                            details['Location'].toString(),
+                          ),
                         ],
                       ),
                     ),
@@ -101,8 +133,12 @@ class PatientDetailsForm extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionHeader(context, 'Primary Survey'),
-                        if (details['primary_survey'] is Map<String, List<String>>)
-                          ..._buildPrimarySurvey(details['primary_survey'] as Map<String, List<String>>),
+                        if (details['primary_survey']
+                            is Map<String, List<String>>)
+                          ..._buildPrimarySurvey(
+                            details['primary_survey']
+                                as Map<String, List<String>>,
+                          ),
                       ],
                     ),
                   ),
@@ -112,18 +148,27 @@ class PatientDetailsForm extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionHeader(context, 'Allergies & Medication'),
-                        _buildInfoRow('Allergies:', details['Allergies'].toString()),
-                        _buildInfoRow('Medication:', details['Medication'].toString()),
+                        _buildInfoRow(
+                          'Allergies:',
+                          details['Allergies'].toString(),
+                        ),
+                        _buildInfoRow(
+                          'Medication:',
+                          details['Medication'].toString(),
+                        ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
               _buildSectionHeader(context, 'Previous History'),
               if (details['previous_history'] is List)
                 _buildText((details['previous_history'] as List).join(', ')),
-              _buildInfoRow('Other History:', details['Other History'].toString()),
+              _buildInfoRow(
+                'Other History:',
+                details['Other History'].toString(),
+              ),
               const SizedBox(height: 20),
               _buildSectionHeader(context, 'Nurse\'s Notes'),
               _buildText(details['Nurse\'s Notes'].toString()),
@@ -136,10 +181,17 @@ class PatientDetailsForm extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        const Text("Front View", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text(
+                          "Front View",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 8),
                         if (frontImage != null)
-                          Image.memory(frontImage, fit: BoxFit.contain, height: 400)
+                          Image.memory(
+                            frontImage,
+                            fit: BoxFit.contain,
+                            height: 400,
+                          )
                         else
                           const Text("No front signature drawn."),
                       ],
@@ -149,10 +201,17 @@ class PatientDetailsForm extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        const Text("Back View", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text(
+                          "Back View",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 8),
                         if (backImage != null)
-                          Image.memory(backImage, fit: BoxFit.contain, height: 400)
+                          Image.memory(
+                            backImage,
+                            fit: BoxFit.contain,
+                            height: 400,
+                          )
                         else
                           const Text("No back signature drawn."),
                       ],
@@ -168,9 +227,15 @@ class PatientDetailsForm extends StatelessWidget {
               if (details['TREATMENT/ACTION'] is List)
                 _buildText((details['TREATMENT/ACTION'] as List).join(', ')),
               const SizedBox(height: 20),
-              _buildSectionHeader(context, 'Handling & Immobilisation on Departure'),
+              _buildSectionHeader(
+                context,
+                'Handling & Immobilisation on Departure',
+              ),
               if (details['HANDLING & IMMOBILISATION ON DEPARTURE'] is List)
-                _buildText((details['HANDLING & IMMOBILISATION ON DEPARTURE'] as List).join(', ')),
+                _buildText(
+                  (details['HANDLING & IMMOBILISATION ON DEPARTURE'] as List)
+                      .join(', '),
+                ),
               const SizedBox(height: 20),
               _buildSectionHeader(context, 'General Condition'),
               _buildText(details['General Condition'].toString()),
@@ -179,32 +244,121 @@ class PatientDetailsForm extends StatelessWidget {
               _buildInfoRow('BP (mmHg):', details['BP (mmHg)'].toString()),
               _buildInfoRow('RR (min):', details['RR (min)'].toString()),
               _buildInfoRow('SPO2 (%):', details['SPO2 (%)'].toString()),
-              _buildInfoRow('Pain Score (/10):', details['Pain Score (/10)'].toString()),
-              _buildInfoRow('Temperature (°C):', details['Temperature (°C)'].toString()),
-              _buildInfoRow('Glucose (mmol/L):', details['Glucose (mmol/L)'].toString()),
+              _buildInfoRow(
+                'Pain Score (/10):',
+                details['Pain Score (/10)'].toString(),
+              ),
+              _buildInfoRow(
+                'Temperature (°C):',
+                details['Temperature (°C)'].toString(),
+              ),
+              _buildInfoRow(
+                'Glucose (mmol/L):',
+                details['Glucose (mmol/L)'].toString(),
+              ),
               const SizedBox(height: 20),
               _buildSectionHeader(context, 'Condition Status'),
-              _buildInfoRow('Condition:', details['Condition Status'].toString()),
+              _buildInfoRow(
+                'Condition:',
+                details['Condition Status'].toString(),
+              ),
               if (details['Condition Status'] == "Death")
                 _buildInfoRow('Death Time:', details['DeathTime'].toString()),
               if (details['Condition Status'] == "Others")
-                _buildInfoRow('Other details:', details['Other Condition Text'].toString()),
+                _buildInfoRow(
+                  'Other details:',
+                  details['Other Condition Text'].toString(),
+                ),
               _buildSectionHeader(context, 'Other Patient Progress / Remarks'),
               _buildText(details['Other Patient Progress/ Remarks'].toString()),
+
+              if (details['documents_provided'] is List)
+                _buildInfoRow(
+                  'Documents Provided:',
+                  (details['documents_provided'] as List).join(', '),
+                ),
               const SizedBox(height: 20),
               _buildSectionHeader(context, 'Staff & Documentation'),
-              _buildInfoRow('Patient Name:', details['patient_name'].toString()),
-              _buildInfoRow('Patient IC No:', details['patient_ic_no'].toString()),
-              _buildInfoRow('Staff Name:', details['staff_name'].toString()),
-              _buildInfoRow('Staff IC No:', details['staff_ic_no'].toString()),
-              if (details['documents_provided'] is List)
-                _buildInfoRow('Documents Provided:', (details['documents_provided'] as List).join(', ')),
-              _buildInfoRow('Endorsed By:', details['endorsed_by_name'].toString()),
-              _buildInfoRow('Endorsed Date:', _getSafeDatePart(details['endorsedDate']?.toString())),
-              _buildInfoRow('Received By:', details['received_by_name'].toString()),
-              _buildInfoRow('Received Date:', _getSafeDatePart(details['receivedDate']?.toString())),
-              _buildInfoRow('Received Time:', _getSafeTimePart(details['receivedTime']?.toString())),
-
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          'Patient Name:',
+                          details['patient_name'].toString(),
+                        ),
+                        _buildInfoRow(
+                          'Patient IC No:',
+                          details['patient_ic_no'].toString(),
+                        ),
+                        _buildSignatureDisplay(details['patient_signature']),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          'Staff Name:',
+                          details['staff_name'].toString(),
+                        ),
+                        _buildInfoRow(
+                          'Staff IC No:',
+                          details['staff_ic_no'].toString(),
+                        ),
+                        _buildSignatureDisplay(details['staff_signature']),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          'Endorsed By:',
+                          details['endorsed_by_name'].toString(),
+                        ),
+                        _buildInfoRow(
+                          'Endorsed Date:',
+                          _getSafeDatePart(details['endorsedDate']?.toString()),
+                        ),
+                        _buildInfoRow(
+                          'Endorsed Date:',
+                          _getSafeDatePart(details['endorsedTime']?.toString()),
+                        ),
+                        _buildSignatureDisplay(
+                          details['endorsed_by_signature'],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          'Received By:',
+                          details['received_by_name'].toString(),
+                        ),
+                        _buildInfoRow(
+                          'Received Date:',
+                          _getSafeDatePart(details['receivedDate']?.toString()),
+                        ),
+                        _buildInfoRow(
+                          'Received Time:',
+                          _getSafeTimePart(details['receivedTime']?.toString()),
+                        ),
+                        _buildSignatureDisplay(
+                          details['received_by_signature'],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         );
@@ -212,14 +366,42 @@ class PatientDetailsForm extends StatelessWidget {
     );
   }
 
+  Widget _buildSignatureDisplay(String? base64String) {
+    if (base64String == null || base64String.isEmpty) {
+      return Container(
+        height: 100,
+        width: 300,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Center(child: Text('No Signature Provided')),
+      );
+    }
+    try {
+      final Uint8List bytes = base64Decode(base64String);
+      return Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Image.memory(
+          bytes,
+          height: 100,
+          width: 300,
+          fit: BoxFit.contain,
+        ),
+      );
+    } catch (e) {
+      return const Text('Error loading signature');
+    }
+  }
+
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
+        Text(title, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
       ],
     );
@@ -238,20 +420,14 @@ class PatientDetailsForm extends StatelessWidget {
       } else {
         value = entry.value.toString();
       }
-      return _buildInfoRow(
-        '${entry.key}:',
-        value,
-      );
+      return _buildInfoRow('${entry.key}:', value);
     }).toList();
   }
 
   // List<Widget> _b
 
   Widget _buildText(String text) {
-    return Text(
-      text,
-      style: GoogleFonts.poppins(fontSize: 14),
-    );
+    return Text(text, style: GoogleFonts.poppins(fontSize: 14));
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -267,9 +443,7 @@ class PatientDetailsForm extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );
@@ -352,7 +526,6 @@ class PatientDetailsForm extends StatelessWidget {
     );
   }
 }
-
 
 // old code without images
 // import 'package:flutter/material.dart';

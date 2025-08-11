@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../screens/home.dart';
+
 class StepNavigationButtons extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
@@ -19,12 +21,14 @@ class StepNavigationButtons extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: currentStep == 0 || currentStep == 4 ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
         children: [
+          if (currentStep > 0  && currentStep < 4)
           ElevatedButton(
             onPressed: currentStep > 0 ? onBack : null,
             child: const Text("Back"),
           ),
+          if (currentStep < 5)
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
@@ -35,12 +39,23 @@ class StepNavigationButtons extends StatelessWidget {
                 vertical: 12,
               ),
               backgroundColor:
-              currentStep < totalSteps - 1 ? Colors.green : null,
+              Colors.green,
             ),
-            onPressed: currentStep < totalSteps - 1 ? onNext : null,
-            child: const Text(
-              "Next",
-              style: TextStyle(color: Colors.white),
+            onPressed: () {
+              if (currentStep < totalSteps - 1) {
+                onNext();
+              } else {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage()),
+                      (route) => false,
+                );
+              }
+            },
+
+            child: Text(
+              currentStep == 3 ? 'Submit form' : currentStep == 4 ? 'Home' : 'Next',
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ],
