@@ -41,6 +41,8 @@ dependencies:
   painter: ^2.0.0
   js: ^0.7.2
   web: ^1.1.1
+  printing: ^5.14.2
+  pdf: ^3.11.3
 
 dev_dependencies:
   flutter_test:

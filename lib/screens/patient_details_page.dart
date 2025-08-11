@@ -26,6 +26,7 @@ class _PatientDetailsState extends State<PatientDetails> {
   final allergiesController = TextEditingController();
   final medicationController = TextEditingController();
   final nursesNotesController = TextEditingController();
+  final otherHistoryController = TextEditingController();
 
 
 
@@ -229,6 +230,9 @@ class _PatientDetailsState extends State<PatientDetails> {
                             selectedHistory.add(option);
                           } else {
                             selectedHistory.remove(option);
+                            if (option == "OTHER") {
+                              otherHistoryController.clear();
+                            }
                           }
                           Provider.of<PatientFormProvider>(context, listen: false)
                               .updateField('previous_history', selectedHistory);
@@ -241,6 +245,15 @@ class _PatientDetailsState extends State<PatientDetails> {
               );
             }).toList(),
           ),
+          // Show "Other History" field only if "OTHER" is checked
+          if (selectedHistory.contains("OTHER")) ...[
+            const SizedBox(height: 10),
+            _buildTextField(
+              "Other History",
+              otherHistoryController,
+              "Please specify",
+            ),
+          ],
           const SizedBox(height: 15),
           _buildTextField(
             "Nurse's Notes",
@@ -260,7 +273,8 @@ class _PatientDetailsState extends State<PatientDetails> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<PatientFormProvider>(context, listen: false);
       provider.updateField('patient_entry_date', selectedDate);
-      provider.updateField('patient_entry_time', selectedTime);
+      String timeString = selectedTime.format(context);
+      provider.updateField('patient_entry_time', timeString);
     });
   }
 

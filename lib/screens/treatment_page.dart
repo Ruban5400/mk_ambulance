@@ -12,14 +12,13 @@ class TreatmentPage extends StatefulWidget {
 }
 
 class _TreatmentPageState extends State<TreatmentPage> {
-
   final Map<String, bool> treatmentOptions = {
     'NO TREATMENT / ADVICE ONLY GIVEN': false,
     'REST-ICE-COMPRESS-ELEVATE': false,
     'SPLIT': false,
     'AIRWAY SUCTION': false,
     'NEUROLOGICAL TEST': false,
-    'OTHER TREATMENT': false,
+    'OTHERS': false,
     'WOUND CLEANSED': false,
     'FRACTURE SUPPORT': false,
     'C-SPINE CONTROL (IMMOBILISATION)': false,
@@ -31,14 +30,15 @@ class _TreatmentPageState extends State<TreatmentPage> {
     'WALKED UNAIDED': false,
     'CHAIR': false,
     'LONGBOARD': false,
-    'OTHER': false,
+    'OTHERS': false,
     'SCOOP': false,
     'WALKED AIDED': false,
     'STRETCHER': false,
   };
 
   String? conditionStatus = 'Unchanged';
-  final TextEditingController generalConditionController = TextEditingController();
+  final TextEditingController generalConditionController =
+      TextEditingController();
   final TextEditingController bpController = TextEditingController();
   final TextEditingController rrController = TextEditingController();
   final TextEditingController spo2Controller = TextEditingController();
@@ -46,11 +46,16 @@ class _TreatmentPageState extends State<TreatmentPage> {
   final TextEditingController glucoseController = TextEditingController();
   final TextEditingController painScoreController = TextEditingController();
   final TextEditingController remarksController = TextEditingController();
+  final TextEditingController otherTreatmentController =
+      TextEditingController();
+  final TextEditingController otherHandlingController = TextEditingController();
 
   bool deathChecked = false;
   bool othersChecked = false;
 
   Widget _buildCheckboxList(String title, Map<String, bool> options) {
+    final TextEditingController othersController = TextEditingController();
+
     final entries = options.entries.toList();
     final half = (entries.length / 2).ceil();
     final leftColumn = entries.sublist(0, half);
@@ -60,34 +65,85 @@ class _TreatmentPageState extends State<TreatmentPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: items.map((entry) {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
+          final isOthers = entry.key.toLowerCase() == "others";
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Checkbox(
-                value: entry.value,
-                onChanged: (value) {
-                  setState(() {
-                    options[entry.key] = value!;
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Checkbox(
+                    value: entry.value,
+                    onChanged: (value) {
+                      setState(() {
+                        options[entry.key] = value!;
 
-                    // Only collect keys where the value is true
-                    final selectedOptions = options.entries
-                        .where((e) => e.value == true)
-                        .map((e) => e.key)
-                        .toList();
+                        // Build selected options
+                        final selectedOptions = options.entries
+                            .where(
+                              (e) => e.value && e.key.toLowerCase() != "OTHERS",
+                            )
+                            .map((e) => e.key)
+                            .toList();
 
-                    // Update only if true
-                    Provider.of<PatientFormProvider>(context, listen: false)
-                        .updateField(title, selectedOptions);
-                  });
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                        // Add custom text if "Others" is checked
+                        if (options["Others"] == true &&
+                            othersController.text.trim().isNotEmpty) {
+                          selectedOptions.add(othersController.text.trim());
+                        }
+
+                        Provider.of<PatientFormProvider>(
+                          context,
+                          listen: false,
+                        ).updateField(title, selectedOptions);
+                      });
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    activeColor: Colors.red.shade800,
+                  ),
+                  Flexible(
+                    child: Text(
+                      entry.key,
+                      style: GoogleFonts.roboto(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Show text field only when "Others" is checked
+              if (isOthers && entry.value)
+                Padding(
+                  padding: const EdgeInsets.only(left: 35.0, bottom: 8),
+                  child: TextField(
+                    controller: othersController,
+                    decoration: const InputDecoration(
+                      hintText: "Please specify",
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      // Update provider when typing in "Others"
+                      final selectedOptions = options.entries
+                          .where(
+                            (e) => e.value && e.key.toLowerCase() != "others",
+                          )
+                          .map((e) => e.key)
+                          .toList();
+                      selectedOptions.add(value.trim());
+
+                      Provider.of<PatientFormProvider>(
+                        context,
+                        listen: false,
+                      ).updateField(title, selectedOptions);
+                    },
+                  ),
                 ),
-                activeColor: Colors.red.shade800,
-              ),
-              Flexible(
-                child: Text(entry.key, style: GoogleFonts.roboto(fontSize: 14)),
-              ),
             ],
           );
         }).toList(),
@@ -104,9 +160,13 @@ class _TreatmentPageState extends State<TreatmentPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: GoogleFonts.roboto(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: GoogleFonts.roboto(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +181,100 @@ class _TreatmentPageState extends State<TreatmentPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1}) {
+  // old code
+  // Widget _buildCheckboxList(String title, Map<String, bool> options) {
+  //   final entries = options.entries.toList();
+  //   final half = (entries.length / 2).ceil();
+  //   final leftColumn = entries.sublist(0, half);
+  //   final rightColumn = entries.sublist(half);
+  //
+  //   Widget buildColumn(List<MapEntry<String, bool>> items) {
+  //     return Column(
+  //       children: [
+  //         Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: items.map((entry) {
+  //             return Row(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 Checkbox(
+  //                   value: entry.value,
+  //                   onChanged: (value) {
+  //                     setState(() {
+  //                       options[entry.key] = value!;
+  //
+  //                       // Only collect keys where the value is true
+  //                       final selectedOptions = options.entries
+  //                           .where((e) => e.value == true)
+  //                           .map((e) => e.key)
+  //                           .toList();
+  //
+  //                       // Update only if true
+  //                       Provider.of<PatientFormProvider>(context, listen: false)
+  //                           .updateField(title, selectedOptions);
+  //                     });
+  //                   },
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(4),
+  //                   ),
+  //                   activeColor: Colors.red.shade800,
+  //                 ),
+  //                 Flexible(
+  //                   child: Text(entry.key, style: GoogleFonts.roboto(fontSize: 14)),
+  //                 ),
+  //               ],
+  //             );
+  //           }).toList(),
+  //         ),
+  //         TextField(
+  //           controller:title == 'TREATMENT/ACTION' ?  otherTreatmentController : otherHandlingController,
+  //           decoration: InputDecoration(
+  //             hintText: title,
+  //             border: const OutlineInputBorder(),
+  //             contentPadding: const EdgeInsets.symmetric(
+  //                 horizontal: 8, vertical: 8),
+  //           ),
+  //           onChanged: (value) {
+  //             Provider.of<PatientFormProvider>(context, listen: false)
+  //                 .updateField(title == 'TREATMENT/ACTION' ?  'otherTreatment' : 'otherHandling', value);
+  //           },
+  //         ),
+  //       ],
+  //     );
+  //   }
+  //
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+  //     decoration: BoxDecoration(
+  //       borderRadius: const BorderRadius.all(Radius.circular(10)),
+  //       border: Border.all(color: Colors.grey, width: 1.0),
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(title,
+  //             style: GoogleFonts.roboto(
+  //                 fontSize: 18, fontWeight: FontWeight.bold)),
+  //         const SizedBox(height: 12),
+  //         Row(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Expanded(child: buildColumn(leftColumn)),
+  //             const SizedBox(width: 32),
+  //             Expanded(child: buildColumn(rightColumn)),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -129,15 +282,18 @@ class _TreatmentPageState extends State<TreatmentPage> {
         const SizedBox(height: 6),
         TextField(
           controller: controller,
-          onChanged: (value){
-            Provider.of<PatientFormProvider>(context, listen: false)
-                .updateField(label, value.trim());
+          onChanged: (value) {
+            Provider.of<PatientFormProvider>(
+              context,
+              listen: false,
+            ).updateField(label, value.trim());
           },
           maxLines: maxLines,
-          keyboardType: [
-            'General Condition',
-            'Other Patient Progress/ Remarks',
-          ].contains(label.toUpperCase().trim())
+          keyboardType:
+              [
+                'General Condition',
+                'Other Patient Progress/ Remarks',
+              ].contains(label.toUpperCase().trim())
               ? TextInputType.text
               : TextInputType.number,
           decoration: const InputDecoration(
@@ -162,11 +318,19 @@ class _TreatmentPageState extends State<TreatmentPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("ACKNOWLEDGEMENT ON PATIENT ARRIVAL AT TRANSFERRED FACILITY",
-              style: GoogleFonts.roboto(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            "ACKNOWLEDGEMENT ON PATIENT ARRIVAL AT TRANSFERRED FACILITY",
+            style: GoogleFonts.roboto(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 20),
-          _buildTextField("General Condition", generalConditionController, maxLines: 3),
+          _buildTextField(
+            "General Condition",
+            generalConditionController,
+            maxLines: 3,
+          ),
           Row(
             children: [
               Expanded(child: _buildTextField("BP (mmHg)", bpController)),
@@ -175,27 +339,125 @@ class _TreatmentPageState extends State<TreatmentPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Condition Status",
-                        style: GoogleFonts.roboto(fontWeight: FontWeight.w500)),
-                    Row(
-                      children: ['Improved', 'Deteriorated', 'Unchanged'].map((status) {
-                        return Row(
-                          children: [
-                            Radio<String>(
-                              value: status,
-                              groupValue: conditionStatus,
-                              onChanged: (val) {
-                                setState(() => conditionStatus = val);
-                                Provider.of<PatientFormProvider>(context, listen: false)
-                                    .updateField("Condition Status", val);
-                              },
-                              activeColor: Colors.red.shade800,
-                            ),
-                            Text(status),
-                          ],
-                        );
-                      }).toList(),
+                    Text(
+                      "Condition Status",
+                      style: GoogleFonts.roboto(fontWeight: FontWeight.w500),
                     ),
+                    Row(
+                      children:
+                          [
+                            'Improved',
+                            'Deteriorated',
+                            'Unchanged',
+                            'Death',
+                            'Others',
+                          ].map((status) {
+                            return Row(
+                              children: [
+                                Radio<String>(
+                                  value: status,
+                                  groupValue: conditionStatus,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      conditionStatus = val;
+                                      val == 'Death'
+                                          ? deathChecked = true
+                                          : deathChecked =false;
+                                      val == 'Others'
+                                          ? othersChecked = true
+                                          : othersChecked = false;
+                                    });
+                                    Provider.of<PatientFormProvider>(
+                                      context,
+                                      listen: false,
+                                    ).updateField("Condition Status", val);
+                                  },
+                                  activeColor: Colors.red.shade800,
+                                ),
+                                Text(status),
+                              ],
+                            );
+                          }).toList(),
+                    ),
+                    if (deathChecked) ...[
+                      GestureDetector(
+                        onTap: () async {
+                          final TimeOfDay? pickedTime = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                          );
+
+                          if (pickedTime != null) {
+                            Provider.of<PatientFormProvider>(
+                              context,
+                              listen: false,
+                            ).updateField(
+                              "DeathTime",
+                              pickedTime.format(context),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            // vertical: 10,
+                          ),
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.access_time, color: Colors.grey[700]),
+                              const SizedBox(width: 8),
+                              Consumer<PatientFormProvider>(
+                                builder: (context, provider, child) {
+                                  final deathTime =
+                                      provider.patientDetails["DeathTime"];
+                                  return Text(
+                                    deathTime ?? "--:--",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: deathTime != null
+                                          ? Colors.black
+                                          : Colors.grey,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (othersChecked) ...[
+                      const SizedBox(width: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              width: 200,
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  hintText: "Specify others",
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (value) {
+                                  Provider.of<PatientFormProvider>(
+                                    context,
+                                    listen: false,
+                                  ).updateField("Others", value.trim());
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 10),
+                    ],
                   ],
                 ),
               ),
@@ -205,43 +467,29 @@ class _TreatmentPageState extends State<TreatmentPage> {
             children: [
               Expanded(child: _buildTextField("RR (min)", rrController)),
               const SizedBox(width: 20),
-              Expanded(child: _buildTextField("Temperature (°C)", temperatureController)),
+              Expanded(
+                child: _buildTextField(
+                  "Temperature (°C)",
+                  temperatureController,
+                ),
+              ),
             ],
           ),
           Row(
             children: [
               Expanded(child: _buildTextField("SPO2 (%)", spo2Controller)),
               const SizedBox(width: 20),
-              Expanded(child: _buildTextField("Glucose (mmol/L)", glucoseController)),
-            ],
-          ),
-          Row(
-            children: [
-              Checkbox(
-                value: deathChecked,
-                onChanged: (val) {
-                  setState(() => deathChecked = val!);
-                  Provider.of<PatientFormProvider>(context, listen: false)
-                      .updateField("Death", val);
-                },
-                activeColor: Colors.red.shade800,
+              Expanded(
+                child: _buildTextField("Glucose (mmol/L)", glucoseController),
               ),
-              const Text("Death"),
-              const SizedBox(width: 20),
-              Checkbox(
-                value: othersChecked,
-                onChanged: (val) {
-                  setState(() => othersChecked = val!);
-                  Provider.of<PatientFormProvider>(context, listen: false)
-                      .updateField("Others", val);
-                },
-                activeColor: Colors.red.shade800,
-              ),
-              const Text("Others"),
             ],
           ),
           _buildTextField("Pain Score (/10)", painScoreController),
-          _buildTextField("Other Patient Progress/ Remarks", remarksController, maxLines: 3),
+          _buildTextField(
+            "Other Patient Progress/ Remarks",
+            remarksController,
+            maxLines: 3,
+          ),
         ],
       ),
     );
@@ -250,20 +498,21 @@ class _TreatmentPageState extends State<TreatmentPage> {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            _buildCheckboxList("TREATMENT/ACTION", treatmentOptions),
-            const SizedBox(height: 20),
-            _buildCheckboxList(
-                "HANDLING & IMMOBILISATION ON DEPARTURE", handlingOptions),
-            const SizedBox(height: 20),
-            _buildAcknowledgementForm(),
-            const SizedBox(height: 40),
-          ],
-        ),
+      constraints: const BoxConstraints(maxWidth: 1000),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          _buildCheckboxList("TREATMENT/ACTION", treatmentOptions),
+          const SizedBox(height: 20),
+          _buildCheckboxList(
+            "HANDLING & IMMOBILISATION ON DEPARTURE",
+            handlingOptions,
+          ),
+          const SizedBox(height: 20),
+          _buildAcknowledgementForm(),
+          const SizedBox(height: 40),
+        ],
+      ),
     );
   }
 }
-
