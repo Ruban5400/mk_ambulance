@@ -39,15 +39,15 @@ class SummaryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-
       child: Column(
         children: [
-          IconButton(
+          const PatientDetailsForm(),
+          SizedBox(height: 30),
+          ElevatedButton.icon(
             icon: const Icon(Icons.print),
             onPressed: () => _printDocument(context),
-            tooltip: 'Print Page',
+            label: Text('Print Page'),
           ),
-          const PatientDetailsForm(),
         ],
       ),
     );
