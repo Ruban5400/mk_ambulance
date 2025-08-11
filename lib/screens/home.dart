@@ -38,8 +38,8 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPageContent() {
     switch (_currentStep) {
       case 0:
-        return const SummaryPage();
-        // return const PatientDetails();
+        // return const SummaryPage();
+        return const PatientDetails();
       case 1:
       return const AssessmentPage();
       case 2:
