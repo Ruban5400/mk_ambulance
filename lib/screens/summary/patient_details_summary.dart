@@ -187,6 +187,8 @@ class PatientDetailsForm extends StatelessWidget {
               _buildInfoRow('Condition:', details['Condition Status'].toString()),
               if (details['Condition Status'] == "Death")
                 _buildInfoRow('Death Time:', details['DeathTime'].toString()),
+              if (details['Condition Status'] == "Others")
+                _buildInfoRow('Other details:', details['Other Condition Text'].toString()),
               _buildSectionHeader(context, 'Other Patient Progress / Remarks'),
               _buildText(details['Other Patient Progress/ Remarks'].toString()),
               const SizedBox(height: 20),
