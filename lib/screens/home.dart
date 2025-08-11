@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mk_ambulance/screens/patient_details_page.dart';
 import 'package:mk_ambulance/screens/sign_off_page.dart';
+import 'package:mk_ambulance/screens/summary/summary_page.dart';
 import 'package:mk_ambulance/screens/treatment_page.dart';
-
 import '../constants/step_tiles.dart';
 import '../widgets/buttons.dart';
 import '../widgets/stepper_widget.dart';
@@ -38,6 +38,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPageContent() {
     switch (_currentStep) {
       case 0:
+        // return const SummaryPage();
         return const PatientDetails();
       case 1:
       return const AssessmentPage();
@@ -46,9 +47,9 @@ class _HomePageState extends State<HomePage> {
       case 3:
       return SignOffPage();
       case 4:
-      // return summaryPage();
+      return SummaryPage();
       default:
-        return const Center(child: Text('Unknown Step'));
+      return const Center(child: Text('Unknown Step'));
     }
   }
 
