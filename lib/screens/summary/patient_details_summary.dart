@@ -267,6 +267,8 @@ class PatientDetailsForm extends StatelessWidget {
                                 _buildInfoRow('Time:', details['patient_entry_time'].toString()),
                               if (_hasValue(details, 'referral_type'))
                                 _buildInfoRow('Referral Type:', details['referral_type'].toString()),
+                              if (_hasValue(details, 'Referral Hospital'))
+                                _buildInfoRow('Referral Hospital:', details['Referral Hospital'].toString()),
                               if (_hasValue(details, 'Location'))
                                 _buildInfoRow('Location:', details['Location'].toString()),
                             ],

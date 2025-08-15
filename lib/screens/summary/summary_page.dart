@@ -1,4 +1,3 @@
-// code without UI responsiveness
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -296,6 +295,11 @@ class SummaryPage extends StatelessWidget {
                           _buildPdfInfoRow(
                             'Referral Type:',
                             details['referral_type'].toString(),
+                          ),
+                        if (details['referral_type'] == 'HOSPITAL REFERRAL' && _hasValue(details, 'Referral Hospital'))
+                          _buildPdfInfoRow(
+                            'Referral Hospital:',
+                            details['Referral Hospital'].toString(),
                           ),
                         if (_hasValue(details, 'Location'))
                           _buildPdfInfoRow(
