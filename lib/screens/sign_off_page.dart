@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/patient_form_data.dart';
-import '../widgets/signature.dart'; // Assuming this is your custom signature widget
+import '../widgets/signature.dart';
 
 class SignOffPage extends StatefulWidget {
   const SignOffPage({super.key});
@@ -156,6 +156,7 @@ class _SignOffPageState extends State<SignOffPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        mainAxisSize: MainAxisSize.min, // Use MainAxisSize.min to prevent the row from taking full width
         children: [
           Checkbox(
             value: options[label],
@@ -178,12 +179,14 @@ class _SignOffPageState extends State<SignOffPage> {
             visualDensity: VisualDensity.compact,
           ),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.roboto(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
+          Flexible( // Wrap Text in Flexible to prevent overflow
+            child: Text(
+              label,
+              style: GoogleFonts.roboto(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ],
@@ -193,8 +196,6 @@ class _SignOffPageState extends State<SignOffPage> {
 
   @override
   Widget build(BuildContext context) {
-    List<String> keys = options.keys.toList();
-    int mid = (keys.length / 2).ceil();
     final provider = Provider.of<PatientFormProvider>(context);
 
     return ConstrainedBox(
@@ -401,25 +402,12 @@ class _SignOffPageState extends State<SignOffPage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: keys.sublist(0, mid).map((label) {
-                            return _buildCheckboxTile(label);
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(width: 30),
-                      Expanded(
-                        child: Column(
-                          children: keys.sublist(mid).map((label) {
-                            return _buildCheckboxTile(label);
-                          }).toList(),
-                        ),
-                      ),
-                    ],
+                  child: Wrap( // Use Wrap to handle responsiveness
+                    spacing: 16.0, // horizontal spacing
+                    runSpacing: 8.0, // vertical spacing
+                    children: options.keys.map((label) {
+                      return _buildCheckboxTile(label);
+                    }).toList(),
                   ),
                 ),
               ],
@@ -680,7 +668,8 @@ class _SignOffPageState extends State<SignOffPage> {
 }
 
 
-// old code without sign and state
+
+// code without UI responsiveness
 // import 'package:flutter/material.dart';
 // import 'package:google_fonts/google_fonts.dart';
 // import 'package:intl/intl.dart';
@@ -703,12 +692,11 @@ class _SignOffPageState extends State<SignOffPage> {
 //   final TextEditingController staffIcController = TextEditingController();
 //   final TextEditingController endorsedNameController = TextEditingController();
 //   final TextEditingController receivedNameController = TextEditingController();
+//
 //   DateTime endorsedDate = DateTime.now();
 //   TimeOfDay endorsedTime = TimeOfDay.now();
 //   DateTime receivedDate = DateTime.now();
 //   TimeOfDay receivedTime = TimeOfDay.now();
-//
-//
 //
 //   Map<String, bool> options = {
 //     'REFERRAL LETTER': false,
@@ -717,8 +705,80 @@ class _SignOffPageState extends State<SignOffPage> {
 //     'AOR': false,
 //   };
 //
-//
 //   final dateFormat = DateFormat('dd-MM-yyyy');
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     // Load existing data from the provider when the page is initialized
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _loadDataFromProvider();
+//     });
+//   }
+//
+//   void _loadDataFromProvider() {
+//     final provider = Provider.of<PatientFormProvider>(context, listen: false);
+//     final patientDetails = provider.patientDetails;
+//
+//     // Load text field data
+//     patientNameController.text = patientDetails['patient_name'] ?? '';
+//     patientIcController.text = patientDetails['patient_ic_no'] ?? '';
+//     staffNameController.text = patientDetails['staff_name'] ?? '';
+//     staffIcController.text = patientDetails['staff_ic_no'] ?? '';
+//     endorsedNameController.text = patientDetails['endorsed_by_name'] ?? '';
+//     receivedNameController.text = patientDetails['received_by_name'] ?? '';
+//
+//     // Load date and time data
+//     String? endorsedDateString = patientDetails['endorsedDate'];
+//     if (endorsedDateString != null) {
+//       try {
+//         endorsedDate = dateFormat.parse(endorsedDateString);
+//       } catch (e) {
+//         // Fallback to current date if parsing fails
+//       }
+//     }
+//
+//     String? endorsedTimeString = patientDetails['endorsedTime'];
+//     if (endorsedTimeString != null) {
+//       try {
+//         final parsedTime = DateFormat.jm().parse(endorsedTimeString);
+//         endorsedTime = TimeOfDay.fromDateTime(parsedTime);
+//       } catch (e) {
+//         // Fallback to current time if parsing fails
+//       }
+//     }
+//
+//     String? receivedDateString = patientDetails['receivedDate'];
+//     if (receivedDateString != null) {
+//       try {
+//         receivedDate = dateFormat.parse(receivedDateString);
+//       } catch (e) {
+//         // Fallback to current date if parsing fails
+//       }
+//     }
+//
+//     String? receivedTimeString = patientDetails['receivedTime'];
+//     if (receivedTimeString != null) {
+//       try {
+//         final parsedTime = DateFormat.jm().parse(receivedTimeString);
+//         receivedTime = TimeOfDay.fromDateTime(parsedTime);
+//       } catch (e) {
+//         // Fallback to current time if parsing fails
+//       }
+//     }
+//
+//     // Load checkbox data
+//     final savedDocuments = patientDetails['documents_provided'] as List<dynamic>?;
+//     if (savedDocuments != null) {
+//       setState(() {
+//         options.forEach((key, value) {
+//           options[key] = savedDocuments.contains(key);
+//         });
+//       });
+//     }
+//
+//     setState(() {}); // Trigger a rebuild to update the UI with loaded data
+//   }
 //
 //   Future<void> _pickDate(String label) async {
 //     final DateTime? picked = await showDatePicker(
@@ -743,7 +803,6 @@ class _SignOffPageState extends State<SignOffPage> {
 //     }
 //   }
 //
-//
 //   Future<void> _pickTime(String label) async {
 //     final TimeOfDay? picked = await showTimePicker(
 //       context: context,
@@ -765,11 +824,9 @@ class _SignOffPageState extends State<SignOffPage> {
 //     }
 //   }
 //
-//
-//
 //   Widget _buildCheckboxTile(String label) {
 //     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 4), // Reduced from 8 to 4
+//       padding: const EdgeInsets.symmetric(vertical: 4),
 //       child: Row(
 //         children: [
 //           Checkbox(
@@ -777,12 +834,10 @@ class _SignOffPageState extends State<SignOffPage> {
 //             onChanged: (bool? value) {
 //               setState(() {
 //                 options[label] = value ?? false;
-//                 // Store only selected (true) options
 //                 final selectedDocuments = options.entries
 //                     .where((e) => e.value)
 //                     .map((e) => e.key)
 //                     .toList();
-//
 //                 Provider.of<PatientFormProvider>(context, listen: false)
 //                     .updateField('documents_provided', selectedDocuments);
 //               });
@@ -792,8 +847,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //             ),
 //             side: BorderSide(color: Colors.red.shade800),
 //             activeColor: Colors.red.shade800,
-//             visualDensity:
-//                 VisualDensity.compact, // Makes checkbox smaller and tighter
+//             visualDensity: VisualDensity.compact,
 //           ),
 //           const SizedBox(width: 8),
 //           Text(
@@ -813,6 +867,8 @@ class _SignOffPageState extends State<SignOffPage> {
 //   Widget build(BuildContext context) {
 //     List<String> keys = options.keys.toList();
 //     int mid = (keys.length / 2).ceil();
+//     final provider = Provider.of<PatientFormProvider>(context);
+//
 //     return ConstrainedBox(
 //       constraints: const BoxConstraints(maxWidth: 1000),
 //       child: Column(
@@ -850,7 +906,6 @@ class _SignOffPageState extends State<SignOffPage> {
 //                   ),
 //                 ),
 //                 const SizedBox(height: 20),
-//
 //                 // Signature Area
 //                 Container(
 //                   width: double.infinity,
@@ -876,17 +931,14 @@ class _SignOffPageState extends State<SignOffPage> {
 //                           ),
 //                           child: SignatureField(
 //                             fieldName: "Patient Signature",
-//                             formValues: {},
+//                             formValues: provider.patientDetails, // Pass the entire map
 //                             onChanged: (signature) {
-//                               setState(() {
-//                                 Provider.of<PatientFormProvider>(context, listen: false)
-//                                     .updateField('patient_signature', signature);
-//                               });
+//                               Provider.of<PatientFormProvider>(context, listen: false)
+//                                   .updateField('patient_signature', signature);
 //                             },
 //                           ),
 //                         ),
 //                       ),
-//
 //                       const SizedBox(height: 16),
 //                       Text(
 //                         "Name",
@@ -895,7 +947,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                       const SizedBox(height: 6),
 //                       TextField(
 //                         controller: patientNameController,
-//                         onChanged: (value){
+//                         onChanged: (value) {
 //                           Provider.of<PatientFormProvider>(context, listen: false)
 //                               .updateField('patient_name', value);
 //                         },
@@ -913,7 +965,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                       const SizedBox(height: 6),
 //                       TextField(
 //                         controller: patientIcController,
-//                         onChanged: (value){
+//                         onChanged: (value) {
 //                           Provider.of<PatientFormProvider>(context, listen: false)
 //                               .updateField('patient_ic_no', value);
 //                         },
@@ -926,7 +978,6 @@ class _SignOffPageState extends State<SignOffPage> {
 //                     ],
 //                   ),
 //                 ),
-//
 //                 const SizedBox(height: 20),
 //                 Container(
 //                   width: double.infinity,
@@ -968,17 +1019,14 @@ class _SignOffPageState extends State<SignOffPage> {
 //                           ),
 //                           child: SignatureField(
 //                             fieldName: "Staff Signature",
-//                             formValues: {},
+//                             formValues: provider.patientDetails,
 //                             onChanged: (signature) {
-//                               setState(() {
-//                                   Provider.of<PatientFormProvider>(context, listen: false)
-//                                       .updateField('staff_signature', signature);
-//                               });
+//                               Provider.of<PatientFormProvider>(context, listen: false)
+//                                   .updateField('staff_signature', signature);
 //                             },
 //                           ),
 //                         ),
 //                       ),
-//
 //                       const SizedBox(height: 16),
 //                       Text(
 //                         "Name",
@@ -987,7 +1035,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                       const SizedBox(height: 6),
 //                       TextField(
 //                         controller: staffNameController,
-//                         onChanged: (value){
+//                         onChanged: (value) {
 //                           Provider.of<PatientFormProvider>(context, listen: false)
 //                               .updateField('staff_name', value);
 //                         },
@@ -1005,7 +1053,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                       const SizedBox(height: 6),
 //                       TextField(
 //                         controller: staffIcController,
-//                         onChanged: (value){
+//                         onChanged: (value) {
 //                           Provider.of<PatientFormProvider>(context, listen: false)
 //                               .updateField('staff_ic_no', value);
 //                         },
@@ -1049,7 +1097,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //               ],
 //             ),
 //           ),
-//           SizedBox(height: 20),
+//           const SizedBox(height: 20),
 //           Container(
 //             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
 //             decoration: BoxDecoration(
@@ -1074,7 +1122,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                 const SizedBox(height: 6),
 //                 TextField(
 //                   controller: endorsedNameController,
-//                   onChanged: (value){
+//                   onChanged: (value) {
 //                     Provider.of<PatientFormProvider>(context, listen: false)
 //                         .updateField('endorsed_by_name', value);
 //                   },
@@ -1098,17 +1146,14 @@ class _SignOffPageState extends State<SignOffPage> {
 //                     ),
 //                     child: SignatureField(
 //                       fieldName: "ENDORSED BY",
-//                       formValues: {},
+//                       formValues: provider.patientDetails,
 //                       onChanged: (signature) {
-//                         setState(() {
-//                             Provider.of<PatientFormProvider>(context, listen: false)
-//                                 .updateField('endorsed_by_signature', signature);
-//                         });
+//                         Provider.of<PatientFormProvider>(context, listen: false)
+//                             .updateField('endorsed_by_signature', signature);
 //                       },
 //                     ),
 //                   ),
 //                 ),
-//
 //                 const SizedBox(height: 16),
 //                 Row(
 //                   children: [
@@ -1120,7 +1165,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                           const Text('Date', style: TextStyle(fontWeight: FontWeight.w500)),
 //                           const SizedBox(height: 8),
 //                           GestureDetector(
-//                             onTap: (){
+//                             onTap: () {
 //                               _pickDate('endorsedDate');
 //                             },
 //                             child: Container(
@@ -1150,7 +1195,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                           const Text('Time', style: TextStyle(fontWeight: FontWeight.w500)),
 //                           const SizedBox(height: 8),
 //                           GestureDetector(
-//                             onTap: (){
+//                             onTap: () {
 //                               _pickTime('endorsedTime');
 //                             },
 //                             child: Container(
@@ -1161,7 +1206,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                               ),
 //                               child: Row(
 //                                 children: [
-//                                   Text('${endorsedTime.format(context)}'),
+//                                   Text(endorsedTime.format(context)),
 //                                   const Spacer(),
 //                                   const Icon(Icons.access_time, size: 18),
 //                                 ],
@@ -1173,11 +1218,10 @@ class _SignOffPageState extends State<SignOffPage> {
 //                     ),
 //                   ],
 //                 )
-//
 //               ],
 //             ),
 //           ),
-//           SizedBox(height: 20),
+//           const SizedBox(height: 20),
 //           Container(
 //             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
 //             decoration: BoxDecoration(
@@ -1226,17 +1270,14 @@ class _SignOffPageState extends State<SignOffPage> {
 //                     ),
 //                     child: SignatureField(
 //                       fieldName: "RECEIVED BY",
-//                       formValues: {},
+//                       formValues: provider.patientDetails,
 //                       onChanged: (signature) {
-//                         setState(() {
-//                             Provider.of<PatientFormProvider>(context, listen: false)
-//                                 .updateField('received_by_signature', signature);
-//                         });
+//                         Provider.of<PatientFormProvider>(context, listen: false)
+//                             .updateField('received_by_signature', signature);
 //                       },
 //                     ),
 //                   ),
 //                 ),
-//
 //                 const SizedBox(height: 16),
 //                 Row(
 //                   children: [
@@ -1248,7 +1289,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                           const Text('Date', style: TextStyle(fontWeight: FontWeight.w500)),
 //                           const SizedBox(height: 8),
 //                           GestureDetector(
-//                             onTap: (){
+//                             onTap: () {
 //                               _pickDate('receivedDate');
 //                             },
 //                             child: Container(
@@ -1278,7 +1319,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                           const Text('Time', style: TextStyle(fontWeight: FontWeight.w500)),
 //                           const SizedBox(height: 8),
 //                           GestureDetector(
-//                             onTap: (){
+//                             onTap: () {
 //                               _pickTime('receivedTime');
 //                             },
 //                             child: Container(
@@ -1289,7 +1330,7 @@ class _SignOffPageState extends State<SignOffPage> {
 //                               ),
 //                               child: Row(
 //                                 children: [
-//                                   Text('${receivedTime.format(context)}'),
+//                                   Text(receivedTime.format(context)),
 //                                   const Spacer(),
 //                                   const Icon(Icons.access_time, size: 18),
 //                                 ],
@@ -1301,7 +1342,6 @@ class _SignOffPageState extends State<SignOffPage> {
 //                     ),
 //                   ],
 //                 )
-//
 //               ],
 //             ),
 //           )
