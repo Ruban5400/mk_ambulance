@@ -517,6 +517,8 @@ class SummaryPage extends StatelessWidget {
                 'Documents Provided:',
                 (details['documents_provided'] as List).join(', '),
               ),
+            if (_hasValue(details, 'other_docs'))
+              _buildPdfInfoRow('Other Documents Provided:', (details['other_docs'])),
             pw.Row(
               children: [
                 pw.Expanded(

@@ -439,6 +439,8 @@ class PatientDetailsForm extends StatelessWidget {
                   _buildSectionHeader(context, 'Sign-Off Details'),
                   if (_hasValue(details, 'documents_provided'))
                     _buildInfoRow('Documents Provided:', (details['documents_provided'] as List).join(', ')),
+                  if (_hasValue(details, 'other_docs'))
+                    _buildInfoRow('Other Documents Provided:', (details['other_docs'])),
                   isLargeScreen
                       ? Row(
                     children: [

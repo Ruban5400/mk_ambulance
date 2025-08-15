@@ -21,6 +21,9 @@ class _SignOffPageState extends State<SignOffPage> {
   final TextEditingController endorsedNameController = TextEditingController();
   final TextEditingController receivedNameController = TextEditingController();
 
+  // New controller for the 'Others' text box
+  final TextEditingController otherDocumentsController = TextEditingController();
+
   DateTime endorsedDate = DateTime.now();
   TimeOfDay endorsedTime = TimeOfDay.now();
   DateTime receivedDate = DateTime.now();
@@ -31,6 +34,7 @@ class _SignOffPageState extends State<SignOffPage> {
     'INVESTIGATION RESULT': false,
     'IMAGING FILM/REPORT': false,
     'AOR': false,
+    'Others': false, // New 'Others' option
   };
 
   final dateFormat = DateFormat('dd-MM-yyyy');
@@ -42,6 +46,24 @@ class _SignOffPageState extends State<SignOffPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDataFromProvider();
     });
+
+    // Add a listener to the new text controller to automatically update the provider
+    otherDocumentsController.addListener(() {
+      Provider.of<PatientFormProvider>(context, listen: false)
+          .updateField('other_documents_text', otherDocumentsController.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    patientNameController.dispose();
+    patientIcController.dispose();
+    staffNameController.dispose();
+    staffIcController.dispose();
+    endorsedNameController.dispose();
+    receivedNameController.dispose();
+    otherDocumentsController.dispose(); // Dispose the new controller
+    super.dispose();
   }
 
   void _loadDataFromProvider() {
@@ -55,8 +77,11 @@ class _SignOffPageState extends State<SignOffPage> {
     staffIcController.text = patientDetails['staff_ic_no'] ?? '';
     endorsedNameController.text = patientDetails['endorsed_by_name'] ?? '';
     receivedNameController.text = patientDetails['received_by_name'] ?? '';
+    // Load text for 'Others' documents
+    otherDocumentsController.text = patientDetails['other_documents_text'] ?? '';
 
-    // Load date and time data
+
+    // Load date and time data (no changes here)
     String? endorsedDateString = patientDetails['endorsedDate'];
     if (endorsedDateString != null) {
       try {
@@ -163,6 +188,7 @@ class _SignOffPageState extends State<SignOffPage> {
             onChanged: (bool? value) {
               setState(() {
                 options[label] = value ?? false;
+                // Corrected line: removed the exclusion of 'Others'
                 final selectedDocuments = options.entries
                     .where((e) => e.value)
                     .map((e) => e.key)
@@ -402,12 +428,34 @@ class _SignOffPageState extends State<SignOffPage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Wrap( // Use Wrap to handle responsiveness
-                    spacing: 16.0, // horizontal spacing
-                    runSpacing: 8.0, // vertical spacing
-                    children: options.keys.map((label) {
-                      return _buildCheckboxTile(label);
-                    }).toList(),
+                  child: Column( // Use Column to stack checkbox row and text field
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap( // Use Wrap to handle responsiveness for checkboxes
+                        spacing: 16.0, // horizontal spacing
+                        runSpacing: 8.0, // vertical spacing
+                        children: options.keys.map((label) {
+                          return _buildCheckboxTile(label);
+                        }).toList(),
+                      ),
+                      // Conditional text field for the "Others" option
+                      if (options['Others'] == true) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: otherDocumentsController,
+                          decoration: InputDecoration(
+                            hintText: 'Specify other documents...',
+                            filled: true,
+                            fillColor: Colors.grey.shade200,
+                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                          ),
+                          onChanged: (value) {
+                            Provider.of<PatientFormProvider>(context, listen: false)
+                                .updateField('other_docs', value);
+                          },
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
@@ -666,6 +714,7 @@ class _SignOffPageState extends State<SignOffPage> {
     );
   }
 }
+
 
 
 
