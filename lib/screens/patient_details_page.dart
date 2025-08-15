@@ -679,6 +679,7 @@ class _PatientDetailsState extends State<PatientDetails> {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
+          keyboardType: label == 'Age' ? TextInputType.number : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
