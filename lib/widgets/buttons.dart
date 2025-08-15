@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/patient_form_data.dart';
 import '../screens/home.dart';
 
 class StepNavigationButtons extends StatelessWidget {
@@ -45,6 +47,7 @@ class StepNavigationButtons extends StatelessWidget {
               if (currentStep < totalSteps - 1) {
                 onNext();
               } else {
+                Provider.of<PatientFormProvider>(context, listen: false).clearAllData();
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => HomePage()),
