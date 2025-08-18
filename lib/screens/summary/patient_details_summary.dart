@@ -267,6 +267,8 @@ class PatientDetailsForm extends StatelessWidget {
                                 _buildInfoRow('Time:', details['patient_entry_time'].toString()),
                               if (_hasValue(details, 'referral_type'))
                                 _buildInfoRow('Referral Type:', details['referral_type'].toString()),
+                              if (_hasValue(details, 'Referral Hospital'))
+                                _buildInfoRow('Referral Hospital:', details['Referral Hospital'].toString()),
                               if (_hasValue(details, 'Location'))
                                 _buildInfoRow('Location:', details['Location'].toString()),
                             ],
@@ -421,12 +423,12 @@ class PatientDetailsForm extends StatelessWidget {
                     if (_hasValue(details, 'Temperature (°C)')) _buildInfoRow('Temperature (°C):', details['Temperature (°C)'].toString()),
                     if (_hasValue(details, 'Glucose (mmol/L)')) _buildInfoRow('Glucose (mmol/L):', details['Glucose (mmol/L)'].toString()),
                   ],
-                  if (_hasValue(details, 'Condition Status') || (details['Condition Status'] == 'Death' && _hasValue(details, 'DeathTime')) || (details['Condition Status'] == 'Others' && _hasValue(details, 'Other Condition Text'))) ...[
+                  if (_hasValue(details, 'Condition Status') || (details['Condition Status'] == 'Death' && _hasValue(details, 'DeathTime')) || (details['Condition Status'] == 'Others' && _hasValue(details, 'Specify others'))) ...[
                     const SizedBox(height: 20),
                     _buildSectionHeader(context, 'Condition Status'),
                     if (_hasValue(details, 'Condition Status')) _buildInfoRow('Condition:', details['Condition Status'].toString()),
                     if (details['Condition Status'] == "Death" && _hasValue(details, 'DeathTime')) _buildInfoRow('Death Time:', details['DeathTime'].toString()),
-                    if (details['Condition Status'] == "Others" && _hasValue(details, 'Other Condition Text')) _buildInfoRow('Other details:', details['Other Condition Text'].toString()),
+                    if (details['Condition Status'] == "Others" && _hasValue(details, 'Specify others')) _buildInfoRow('Other details:', details['Specify others'].toString()),
                   ],
                   if (_hasValue(details, 'Other Patient Progress/ Remarks')) ...[
                     const SizedBox(height: 20),
@@ -437,6 +439,10 @@ class PatientDetailsForm extends StatelessWidget {
                   _buildSectionHeader(context, 'Sign-Off Details'),
                   if (_hasValue(details, 'documents_provided'))
                     _buildInfoRow('Documents Provided:', (details['documents_provided'] as List).join(', ')),
+                  if (_hasValue(details, 'referral_letter_documents_text'))
+                    _buildInfoRow('Referral Letter:', (details['referral_letter_documents_text'])),
+                  if (_hasValue(details, 'other_docs'))
+                    _buildInfoRow('Other Documents Provided:', (details['other_docs'])),
                   isLargeScreen
                       ? Row(
                     children: [
@@ -836,7 +842,7 @@ class PatientDetailsForm extends StatelessWidget {
 //               ],
 //               if (_hasValue(details, 'Condition Status') ||
 //                   (details['Condition Status'] == 'Death' && _hasValue(details, 'DeathTime')) ||
-//                   (details['Condition Status'] == 'Others' && _hasValue(details, 'Other Condition Text'))) ...[
+//                   (details['Condition Status'] == 'Others' && _hasValue(details, 'Specify others'))) ...[
 //                 const SizedBox(height: 20),
 //                 _buildSectionHeader(context, 'Condition Status'),
 //                 if (_hasValue(details, 'Condition Status'))
@@ -846,10 +852,10 @@ class PatientDetailsForm extends StatelessWidget {
 //                   ),
 //                 if (details['Condition Status'] == "Death" && _hasValue(details, 'DeathTime'))
 //                   _buildInfoRow('Death Time:', details['DeathTime'].toString()),
-//                 if (details['Condition Status'] == "Others" && _hasValue(details, 'Other Condition Text'))
+//                 if (details['Condition Status'] == "Others" && _hasValue(details, 'Specify others'))
 //                   _buildInfoRow(
 //                     'Other details:',
-//                     details['Other Condition Text'].toString(),
+//                     details['Specify others'].toString(),
 //                   ),
 //               ],
 //               if (_hasValue(details, 'Other Patient Progress/ Remarks')) ...[
