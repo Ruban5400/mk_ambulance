@@ -23,6 +23,7 @@ class _SignOffPageState extends State<SignOffPage> {
 
   // New controller for the 'Others' text box
   final TextEditingController otherDocumentsController = TextEditingController();
+  final TextEditingController referralLetterDocumentsController = TextEditingController();
 
   DateTime endorsedDate = DateTime.now();
   TimeOfDay endorsedTime = TimeOfDay.now();
@@ -52,6 +53,10 @@ class _SignOffPageState extends State<SignOffPage> {
       Provider.of<PatientFormProvider>(context, listen: false)
           .updateField('other_documents_text', otherDocumentsController.text);
     });
+    referralLetterDocumentsController.addListener(() {
+      Provider.of<PatientFormProvider>(context, listen: false)
+          .updateField('referral_letter_documents_text', referralLetterDocumentsController.text);
+    });
   }
 
   @override
@@ -62,7 +67,8 @@ class _SignOffPageState extends State<SignOffPage> {
     staffIcController.dispose();
     endorsedNameController.dispose();
     receivedNameController.dispose();
-    otherDocumentsController.dispose(); // Dispose the new controller
+    otherDocumentsController.dispose();
+    referralLetterDocumentsController.dispose();
     super.dispose();
   }
 
@@ -79,6 +85,7 @@ class _SignOffPageState extends State<SignOffPage> {
     receivedNameController.text = patientDetails['received_by_name'] ?? '';
     // Load text for 'Others' documents
     otherDocumentsController.text = patientDetails['other_documents_text'] ?? '';
+    referralLetterDocumentsController.text = patientDetails['referral_letter_documents_text'] ?? '';
 
 
     // Load date and time data (no changes here)
@@ -438,7 +445,22 @@ class _SignOffPageState extends State<SignOffPage> {
                           return _buildCheckboxTile(label);
                         }).toList(),
                       ),
-                      // Conditional text field for the "Others" option
+                      if (options['REFERRAL LETTER'] == true) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: referralLetterDocumentsController,
+                          decoration: InputDecoration(
+                            hintText: 'Specify referral letter details...',
+                            filled: true,
+                            fillColor: Colors.grey.shade200,
+                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                          ),
+                          onChanged: (value) {
+                            Provider.of<PatientFormProvider>(context, listen: false)
+                                .updateField('referral_letter_documents_text', value);
+                          },
+                        ),
+                      ],
                       if (options['Others'] == true) ...[
                         const SizedBox(height: 16),
                         TextField(
