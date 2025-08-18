@@ -1,11 +1,11 @@
 {
-    "name": "mk_ambulance",
+    "name": "MK Ambulance",
     "short_name": "mk_ambulance",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Emergency medical services at your fingertips.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
