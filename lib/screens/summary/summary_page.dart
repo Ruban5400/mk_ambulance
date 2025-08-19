@@ -1,4 +1,3 @@
-// code without UI responsiveness
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -297,6 +296,11 @@ class SummaryPage extends StatelessWidget {
                             'Referral Type:',
                             details['referral_type'].toString(),
                           ),
+                        if (details['referral_type'] == 'HOSPITAL REFERRAL' && _hasValue(details, 'Referral Hospital'))
+                          _buildPdfInfoRow(
+                            'Referral Hospital:',
+                            details['Referral Hospital'].toString(),
+                          ),
                         if (_hasValue(details, 'Location'))
                           _buildPdfInfoRow(
                             'Location:',
@@ -485,7 +489,7 @@ class SummaryPage extends StatelessWidget {
             ],
             if (_hasValue(details, 'Condition Status') ||
                 (details['Condition Status'] == 'Death' && _hasValue(details, 'DeathTime')) ||
-                (details['Condition Status'] == 'Others' && _hasValue(details, 'Other Condition Text'))) ...[
+                (details['Condition Status'] == 'Others' && _hasValue(details, 'Specify others'))) ...[
               pw.SizedBox(height: 20),
               _buildPdfSectionHeader('Condition Status'),
               if (_hasValue(details, 'Condition Status'))
@@ -495,10 +499,10 @@ class SummaryPage extends StatelessWidget {
                 ),
               if (details['Condition Status'] == "Death" && _hasValue(details, 'DeathTime'))
                 _buildPdfInfoRow('Death Time:', details['DeathTime'].toString()),
-              if (details['Condition Status'] == "Others" && _hasValue(details, 'Other Condition Text'))
+              if (details['Condition Status'] == "Others" && _hasValue(details, 'Specify others'))
                 _buildPdfInfoRow(
                   'Other details:',
-                  details['Other Condition Text'].toString(),
+                  details['Specify others'].toString(),
                 ),
             ],
             if (_hasValue(details, 'Other Patient Progress/ Remarks')) ...[
@@ -513,6 +517,10 @@ class SummaryPage extends StatelessWidget {
                 'Documents Provided:',
                 (details['documents_provided'] as List).join(', '),
               ),
+            if (_hasValue(details, 'referral_letter_documents_text'))
+              _buildPdfInfoRow('Referral Letter:', (details['referral_letter_documents_text'])),
+            if (_hasValue(details, 'other_docs'))
+              _buildPdfInfoRow('Other Documents Provided:', (details['other_docs'])),
             pw.Row(
               children: [
                 pw.Expanded(
@@ -894,7 +902,7 @@ class SummaryPage extends StatelessWidget {
   //             ],
   //             if (_hasValue(details, 'Condition Status') ||
   //                 (details['Condition Status'] == 'Death' && _hasValue(details, 'DeathTime')) ||
-  //                 (details['Condition Status'] == 'Others' && _hasValue(details, 'Other Condition Text'))) ...[
+  //                 (details['Condition Status'] == 'Others' && _hasValue(details, 'Specify others'))) ...[
   //               pw.SizedBox(height: 20),
   //               _buildPdfSectionHeader('Condition Status'),
   //               if (_hasValue(details, 'Condition Status'))
@@ -904,10 +912,10 @@ class SummaryPage extends StatelessWidget {
   //                 ),
   //               if (details['Condition Status'] == "Death" && _hasValue(details, 'DeathTime'))
   //                 _buildPdfInfoRow('Death Time:', details['DeathTime'].toString()),
-  //               if (details['Condition Status'] == "Others" && _hasValue(details, 'Other Condition Text'))
+  //               if (details['Condition Status'] == "Others" && _hasValue(details, 'Specify others'))
   //                 _buildPdfInfoRow(
   //                   'Other details:',
-  //                   details['Other Condition Text'].toString(),
+  //                   details['Specify others'].toString(),
   //                 ),
   //             ],
   //             if (_hasValue(details, 'Other Patient Progress/ Remarks')) ...[
