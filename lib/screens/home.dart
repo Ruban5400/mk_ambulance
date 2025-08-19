@@ -23,13 +23,22 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentStep = 0;
+  final _treatmentFormKey = GlobalKey<FormState>();
 
   void _goNext() {
-    if (_currentStep < stepTitles.length - 1) {
-      setState(() {
-        _currentStep++;
-      });
+    bool isFormValid = true;
+    if (_currentStep == 2) {
+      // This is the TreatmentPage step.
+      isFormValid = _treatmentFormKey.currentState?.validate() ?? false;
     }
+    if (isFormValid) {
+      if (_currentStep < stepTitles.length - 1) {
+        setState(() {
+          _currentStep++;
+        });
+      }
+    }
+
   }
 
   void _goBack() {
@@ -47,7 +56,7 @@ class _HomePageState extends State<HomePage> {
       case 1:
         return const AssessmentPage();
       case 2:
-        return TreatmentPage();
+        return TreatmentPage(formKey: _treatmentFormKey);
       case 3:
         return SignOffPage();
       case 4:
@@ -68,10 +77,10 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.local_hospital_rounded, color: Colors.red),
+              Image.asset('assets/images/logo_bg.png',height: 50,),
               const SizedBox(width: 8),
               Text(
-                'Ambulance Patient Record',
+                'Patient Record',
                 style: GoogleFonts.poppins(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

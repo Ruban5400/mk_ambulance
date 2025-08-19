@@ -169,6 +169,159 @@ class _AssessmentPageState extends State<AssessmentPage> {
   }
 
   // A helper function to build the row for a single field in the observation table.
+  // Widget buildFieldRow(String label, List<TextEditingController> controllers) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 8.0),
+  //     child: Row(
+  //       children: [
+  //         SizedBox(
+  //           width: kObservationColumnWidth,
+  //           child: Text(
+  //             label,
+  //             style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 8),
+  //         ...controllers.asMap().entries.map((entry) {
+  //           int colIndex = entry.key;
+  //           TextEditingController controller = entry.value;
+  //
+  //           // Determine validation and keyboard type based on the field label
+  //           TextInputType keyboardType = TextInputType.text;
+  //           List<TextInputFormatter> formatters = [];
+  //           String? Function(String?)? validator;
+  //
+  //           if (label == 'BLOOD PRESSURE') {
+  //             keyboardType = TextInputType.number;
+  //             formatters = [
+  //               // Allows only digits and a single slash
+  //               FilteringTextInputFormatter.allow(RegExp(r'^[0-9/]+$')),
+  //               TextInputFormatter.withFunction((oldValue, newValue) {
+  //                 // Enforce only one slash
+  //                 if (newValue.text.contains('/') && newValue.text.indexOf('/') != newValue.text.lastIndexOf('/')) {
+  //                   return oldValue;
+  //                 }
+  //                 return newValue;
+  //               }),
+  //             ];
+  //             validator = (value) {
+  //               if (value == null || value.isEmpty) {
+  //                 return 'Enter BP in "__/__" format';
+  //               }
+  //               if (!RegExp(r'^\d+\/\d+$').hasMatch(value)) {
+  //                 return 'Invalid format. Use numbers and a single slash.';
+  //               }
+  //               return null;
+  //             };
+  //           } else if ([
+  //             'RESPIRATORY RATE',
+  //             'PULSE RATE',
+  //             'SPO2',
+  //             'BLOOD GLUCOSE',
+  //             'TEMPERATURE',
+  //             'PAIN SCORE',
+  //             'GCS',
+  //             'PUPIL SIZE (mm)',
+  //           ].contains(label.toUpperCase().trim())) {
+  //             keyboardType = TextInputType.number;
+  //             formatters = [
+  //               FilteringTextInputFormatter.digitsOnly,
+  //             ];
+  //             validator = (value) {
+  //               if (value == null || value.isEmpty) {
+  //                 return 'Enter a valid number';
+  //               }
+  //               return null;
+  //             };
+  //           }
+  //
+  //           return SizedBox(
+  //             width: kObservationColumnWidth,
+  //             child: Padding(
+  //               padding: const EdgeInsets.symmetric(horizontal: 4),
+  //               child: TextFormField(
+  //                 controller: controller,
+  //                 onChanged: (value) {
+  //                   Provider.of<PatientFormProvider>(
+  //                     context,
+  //                     listen: false,
+  //                   ).updateObservationField(
+  //                     fieldName: label,
+  //                     index: colIndex,
+  //                     value: value.trim(),
+  //                   );
+  //                 },
+  //                 readOnly: label == 'DATE/TIME',
+  //                 keyboardType: keyboardType,
+  //                 inputFormatters: formatters,
+  //                 validator: validator,
+  //                 decoration: InputDecoration(
+  //                   filled: true,
+  //                   fillColor: Colors.grey[200],
+  //                   suffixText: label == 'SPO2'
+  //                       ? '%'
+  //                       : label == 'TEMPERATURE'
+  //                       ? '°C'
+  //                       : label == 'PAIN SCORE'
+  //                       ? '/10'
+  //                       : null,
+  //                   suffixIcon: label == 'DATE/TIME'
+  //                       ? IconButton(
+  //                     icon: const Icon(Icons.calendar_today, size: 16),
+  //                     onPressed: () async {
+  //                       final now = DateTime.now();
+  //                       final date = await showDatePicker(
+  //                         context: context,
+  //                         initialDate: now,
+  //                         firstDate: DateTime(2000),
+  //                         lastDate: DateTime(2100),
+  //                       );
+  //                       if (date != null) {
+  //                         final time = await showTimePicker(
+  //                           context: context,
+  //                           initialTime: TimeOfDay.fromDateTime(now),
+  //                         );
+  //                         if (time != null) {
+  //                           final selected = DateTime(
+  //                             date.year,
+  //                             date.month,
+  //                             date.day,
+  //                             time.hour,
+  //                             time.minute,
+  //                           );
+  //                           controller.text = formatter.format(selected);
+  //                           Provider.of<PatientFormProvider>(
+  //                             context,
+  //                             listen: false,
+  //                           ).updateObservationField(
+  //                             fieldName: label,
+  //                             index: colIndex,
+  //                             value: controller.text,
+  //                           );
+  //                         }
+  //                       }
+  //                     },
+  //                   )
+  //                       : null,
+  //                   border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(6.0),
+  //                     borderSide: BorderSide.none,
+  //                   ),
+  //                   contentPadding: const EdgeInsets.symmetric(
+  //                     vertical: 12,
+  //                     horizontal: 10,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           );
+  //         }),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // new code with validation
   Widget buildFieldRow(String label, List<TextEditingController> controllers) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -192,7 +345,7 @@ class _AssessmentPageState extends State<AssessmentPage> {
             String? Function(String?)? validator;
 
             if (label == 'BLOOD PRESSURE') {
-              keyboardType = TextInputType.number;
+              keyboardType = TextInputType.text;
               formatters = [
                 // Allows only digits and a single slash
                 FilteringTextInputFormatter.allow(RegExp(r'^[0-9/]+$')),
@@ -204,28 +357,29 @@ class _AssessmentPageState extends State<AssessmentPage> {
                   return newValue;
                 }),
               ];
-              validator = (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Enter BP in "__/__" format';
-                }
-                if (!RegExp(r'^\d+\/\d+$').hasMatch(value)) {
-                  return 'Invalid format. Use numbers and a single slash.';
-                }
-                return null;
-              };
-            } else if ([
-              'RESPIRATORY RATE',
-              'PULSE RATE',
-              'SPO2',
-              'BLOOD GLUCOSE',
-              'TEMPERATURE',
-              'PAIN SCORE',
-              'GCS',
-              'PUPIL SIZE (mm)',
-            ].contains(label.toUpperCase().trim())) {
+            } else if (['SPO2', 'PAIN SCORE', 'GCS', 'PUPIL SIZE (mm)'].contains(label.toUpperCase().trim())) {
+              // These fields only need digits.
               keyboardType = TextInputType.number;
               formatters = [
                 FilteringTextInputFormatter.digitsOnly,
+              ];
+            } else if (['RESPIRATORY RATE', 'PULSE RATE', 'BLOOD GLUCOSE'].contains(label.toUpperCase().trim())) {
+              // These fields can have decimal points or commas, so they need a more permissive formatter.
+              keyboardType = TextInputType.number;
+              formatters = [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*[\d,]*$')),
+              ];
+              validator = (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Enter a valid number';
+                }
+                return null;
+              };
+            } else if (label.toUpperCase().trim() == 'TEMPERATURE') {
+              // Temperature allows decimals
+              keyboardType = TextInputType.numberWithOptions(decimal: true);
+              formatters = [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
               ];
               validator = (value) {
                 if (value == null || value.isEmpty) {
@@ -315,7 +469,7 @@ class _AssessmentPageState extends State<AssessmentPage> {
                 ),
               ),
             );
-          }),
+          }).toList(),
         ],
       ),
     );

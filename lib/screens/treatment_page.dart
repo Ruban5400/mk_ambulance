@@ -6,7 +6,8 @@ import 'package:provider/provider.dart';
 import '../providers/patient_form_data.dart';
 
 class TreatmentPage extends StatefulWidget {
-  const TreatmentPage({super.key});
+  final GlobalKey<FormState> formKey;
+  const TreatmentPage({super.key, required this.formKey});
 
   @override
   State<TreatmentPage> createState() => _TreatmentPageState();
@@ -29,8 +30,6 @@ class _TreatmentPageState extends State<TreatmentPage> {
   final TextEditingController otherTreatmentController = TextEditingController();
   final TextEditingController otherHandlingController = TextEditingController();
   final TextEditingController otherConditionController = TextEditingController();
-
-  final _acknowledgementFormKey = GlobalKey<FormState>();
 
   bool deathChecked = false;
   bool othersChecked = false;
@@ -175,52 +174,64 @@ class _TreatmentPageState extends State<TreatmentPage> {
         children: items.map((entry) {
           final isOthers = entry.key == "OTHERS";
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: entry.value,
-                    onChanged: (value) {
-                      setState(() {
-                        options[entry.key] = value!;
-                      });
-                      _updateCheckboxProvider(title, options, othersController);
-                    },
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+          return InkWell( // Wrap the entire clickable area in InkWell
+            onTap: () {
+              setState(() {
+                // Toggle the checkbox value
+                options[entry.key] = !entry.value;
+              });
+              _updateCheckboxProvider(title, options, othersController);
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      value: entry.value,
+                      // The onTap from InkWell handles the state change,
+                      // so we can set onChanged to null or keep it for the checkbox itself.
+                      // If you keep it, ensure it mirrors the InkWell logic.
+                      onChanged: (value) {
+                        setState(() {
+                          options[entry.key] = value!;
+                        });
+                        _updateCheckboxProvider(title, options, othersController);
+                      },
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      activeColor: Colors.red.shade800,
                     ),
-                    activeColor: Colors.red.shade800,
-                  ),
-                  Flexible(
-                    child: Text(
-                      entry.key,
-                      style: GoogleFonts.roboto(fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
-              if (isOthers && entry.value)
-                Padding(
-                  padding: const EdgeInsets.only(left: 35.0, bottom: 8),
-                  child: TextField(
-                    controller: othersController,
-                    decoration: const InputDecoration(
-                      hintText: "Please specify",
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
+                    Flexible(
+                      child: Text(
+                        entry.key,
+                        style: GoogleFonts.roboto(fontSize: 14),
                       ),
                     ),
-                    onChanged: (value) {
-                      _updateCheckboxProvider(title, options, othersController);
-                    },
-                  ),
+                  ],
                 ),
-            ],
+                if (isOthers && entry.value)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 35.0, bottom: 8),
+                    child: TextField(
+                      controller: othersController,
+                      decoration: const InputDecoration(
+                        hintText: "Please specify",
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        _updateCheckboxProvider(title, options, othersController);
+                      },
+                    ),
+                  ),
+              ],
+            ),
           );
         }).toList(),
       );
@@ -257,6 +268,44 @@ class _TreatmentPageState extends State<TreatmentPage> {
     );
   }
 
+  // validation on clicking next button
+  // Widget _buildTextField({
+  //   required String label,
+  //   required TextEditingController controller,
+  //   int maxLines = 1,
+  //   TextInputType? keyboardType,
+  //   String? Function(String?)? validator,
+  //   List<TextInputFormatter>? inputFormatters,
+  // })
+  // {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(label, style: GoogleFonts.roboto(fontWeight: FontWeight.w500)),
+  //       const SizedBox(height: 6),
+  //       TextFormField(
+  //         controller: controller,
+  //         onChanged: (value) {
+  //           Provider.of<PatientFormProvider>(
+  //             context,
+  //             listen: false,
+  //           ).updateField(label, value.trim());
+  //         },
+  //         maxLines: maxLines,
+  //         keyboardType: keyboardType,
+  //         validator: validator,
+  //         inputFormatters: inputFormatters,
+  //         decoration: const InputDecoration(
+  //           filled: true,
+  //           fillColor: Color(0xfff5f5f5),
+  //           border: OutlineInputBorder(borderSide: BorderSide.none),
+  //         ),
+  //       ),
+  //       const SizedBox(height: 12),
+  //     ],
+  //   );
+  // }
+
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
@@ -273,10 +322,15 @@ class _TreatmentPageState extends State<TreatmentPage> {
         TextFormField(
           controller: controller,
           onChanged: (value) {
+            // Update the provider
             Provider.of<PatientFormProvider>(
               context,
               listen: false,
             ).updateField(label, value.trim());
+
+            // Trigger real-time validation
+            if (widget.formKey.currentState?.validate() ?? false) {
+            }
           },
           maxLines: maxLines,
           keyboardType: keyboardType,
@@ -302,7 +356,7 @@ class _TreatmentPageState extends State<TreatmentPage> {
         border: Border.all(color: Colors.grey, width: 1.0),
       ),
       child: Form(
-        key: _acknowledgementFormKey,
+        key: widget.formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -329,7 +383,7 @@ class _TreatmentPageState extends State<TreatmentPage> {
                       _buildTextField(
                         label: "BP (mmHg)",
                         controller: bpController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.text,
                         inputFormatters: [
                           // Allows only digits and a single slash
                           FilteringTextInputFormatter.allow(RegExp(r'^[0-9/]+$')),
@@ -342,14 +396,36 @@ class _TreatmentPageState extends State<TreatmentPage> {
                           }),
                         ],
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter BP in the format "__/__"';
+                          if (value != null && value.isNotEmpty) {
+                            // 1. Check for the correct format (e.g., '120/80')
+                            if (!RegExp(r'^\d+\/\d+$').hasMatch(value)) {
+                              return 'Invalid format. Use numbers and a single slash.';
+                            }
+
+                            final parts = value.split('/');
+                            final topNumber = int.tryParse(parts[0]);
+                            final bottomNumber = int.tryParse(parts[1]);
+
+                            // 2. Ensure both parts are valid numbers
+                            if (topNumber == null || bottomNumber == null) {
+                              return 'Invalid number format.';
+                            }
+
+                            // 3. Check the logical relationship (top > bottom)
+                            if (topNumber <= bottomNumber) {
+                              return 'Systolic number must be greater than diastolic number.';
+                            }
+
+                            // 4. Validate the specified ranges
+                            if (topNumber < 90 || topNumber > 180) {
+                              return 'Systolic number must be between 90 and 180.';
+                            }
+                            if (bottomNumber < 60 || bottomNumber > 120) {
+                              return 'Diastolic number must be between 60 and 120.';
+                            }
                           }
-                          // Regex to check for the format 'number/number'
-                          if (!RegExp(r'^\d+\/\d+$').hasMatch(value)) {
-                            return 'Invalid format. Use numbers and a single slash.';
-                          }
-                          return null;
+
+                          return null; // The input is either empty or valid
                         },
                       ),
                       _buildTextField(
@@ -360,9 +436,22 @@ class _TreatmentPageState extends State<TreatmentPage> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         validator: (value) {
+                          // If the field is empty, it's considered valid.
                           if (value == null || value.isEmpty) {
-                            return 'Enter a valid number';
+                            return null;
                           }
+                          final number = int.tryParse(value);
+
+                          // If parsing fails, it's not a valid number.
+                          if (number == null) {
+                            return 'Please enter a valid number.';
+                          }
+
+                          // Check if the number is within the required range.
+                          if (number < 12 || number > 20) {
+                            return 'Value must be between 12 and 20.';
+                          }
+
                           return null;
                         },
                       ),
@@ -381,35 +470,47 @@ class _TreatmentPageState extends State<TreatmentPage> {
                       Wrap(
                         spacing: 8.0,
                         runSpacing: 4.0,
-                        children:
-                        [
+                        children: [
                           'Improved',
                           'Deteriorated',
                           'Unchanged',
                           'Death',
                           'Others',
                         ].map((status) {
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Radio<String>(
-                                value: status,
-                                groupValue: conditionStatus,
-                                onChanged: (val) {
-                                  setState(() {
-                                    conditionStatus = val;
-                                    deathChecked = (val == 'Death');
-                                    othersChecked = (val == 'Others');
-                                  });
-                                  Provider.of<PatientFormProvider>(
-                                    context,
-                                    listen: false,
-                                  ).updateField("Condition Status", val);
-                                },
-                                activeColor: Colors.red.shade800,
-                              ),
-                              Text(status),
-                            ],
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                conditionStatus = status;
+                                deathChecked = (status == 'Death');
+                                othersChecked = (status == 'Others');
+                              });
+                              Provider.of<PatientFormProvider>(
+                                context,
+                                listen: false,
+                              ).updateField("Condition Status", status);
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Radio<String>(
+                                  value: status,
+                                  groupValue: conditionStatus,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      conditionStatus = val;
+                                      deathChecked = (val == 'Death');
+                                      othersChecked = (val == 'Others');
+                                    });
+                                    Provider.of<PatientFormProvider>(
+                                      context,
+                                      listen: false,
+                                    ).updateField("Condition Status", val);
+                                  },
+                                  activeColor: Colors.red.shade800,
+                                ),
+                                Text(status),
+                              ],
+                            ),
                           );
                         }).toList(),
                       ),
@@ -495,12 +596,27 @@ class _TreatmentPageState extends State<TreatmentPage> {
                   controller: temperatureController,
                   keyboardType: TextInputType.number,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                   ],
                   validator: (value) {
+                    // If the field is empty, it's considered valid.
                     if (value == null || value.isEmpty) {
-                      return 'Enter a valid number';
+                      return null;
                     }
+
+                    // Attempt to parse the string to a double.
+                    final number = double.tryParse(value);
+
+                    // If parsing fails, it's not a valid number.
+                    if (number == null) {
+                      return 'Please enter a valid temperature.';
+                    }
+
+                    // Check if the number is within the required range (35.0 to 38.0).
+                    if (number < 35.0 || number > 38.0) {
+                      return 'Temperature must be between 35.0 and 38.0.';
+                    }
+                    // If all checks pass, the input is valid.
                     return null;
                   },
                 )),
@@ -513,9 +629,22 @@ class _TreatmentPageState extends State<TreatmentPage> {
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   validator: (value) {
+                    // If the field is empty, it's considered valid.
                     if (value == null || value.isEmpty) {
-                      return 'Enter a valid number';
+                      return null;
                     }
+                    final number = int.tryParse(value);
+
+                    // If parsing fails, it's not a valid number.
+                    if (number == null) {
+                      return 'Please enter a valid number.';
+                    }
+
+                    // Check if the number is within the required range.
+                    if (number < 90) {
+                      return 'Value must be greater than 90.';
+                    }
+
                     return null;
                   },
                 )),
@@ -531,9 +660,22 @@ class _TreatmentPageState extends State<TreatmentPage> {
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   validator: (value) {
+                    // If the field is empty, it's considered valid.
                     if (value == null || value.isEmpty) {
-                      return 'Enter a valid number';
+                      return null;
                     }
+                    final number = int.tryParse(value);
+
+                    // If parsing fails, it's not a valid number.
+                    if (number == null) {
+                      return 'Please enter a valid number.';
+                    }
+
+                    // Check if the number is within the required range.
+                    if (number < 70 || number > 126) {
+                      return 'Value must be between 70 and 126.';
+                    }
+
                     return null;
                   },
                 )),
@@ -546,9 +688,22 @@ class _TreatmentPageState extends State<TreatmentPage> {
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   validator: (value) {
+                    // If the field is empty, it's considered valid.
                     if (value == null || value.isEmpty) {
-                      return 'Enter a valid number';
+                      return null;
                     }
+                    final number = int.tryParse(value);
+
+                    // If parsing fails, it's not a valid number.
+                    if (number == null) {
+                      return 'Please enter a valid number.';
+                    }
+
+                    // Check if the number is within the required range.
+                    if (number < 0 || number > 10) {
+                      return 'Value must be between 0 and 10.';
+                    }
+
                     return null;
                   },
                 )),
