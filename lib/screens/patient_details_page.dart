@@ -317,23 +317,37 @@ class _PatientDetailsState extends State<PatientDetails> {
         Wrap(
           spacing: 20,
           children: referralOptions.map((type) {
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Radio<String>(
-                  activeColor: Colors.red,
-                  value: type,
-                  groupValue: referralType,
-                  onChanged: (val) => setState(() {
-                    referralType = val!;
-                    Provider.of<PatientFormProvider>(
-                      context,
-                      listen: false,
-                    ).updateField('referral_type', referralType);
-                  }),
-                ),
-                Text(type),
-              ],
+            return InkWell( // Use InkWell to make the whole area tappable
+              onTap: () {
+                setState(() {
+                  referralType = type;
+                  Provider.of<PatientFormProvider>(
+                    context,
+                    listen: false,
+                  ).updateField('referral_type', referralType);
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Radio<String>(
+                    activeColor: Colors.red,
+                    value: type,
+                    groupValue: referralType,
+                    onChanged: (val) {
+                      // This is now redundant but can be kept for consistency
+                      setState(() {
+                        referralType = val!;
+                        Provider.of<PatientFormProvider>(
+                          context,
+                          listen: false,
+                        ).updateField('referral_type', referralType);
+                      });
+                    },
+                  ),
+                  Text(type),
+                ],
+              ),
             );
           }).toList(),
         ),
@@ -358,22 +372,35 @@ class _PatientDetailsState extends State<PatientDetails> {
         Wrap(
           spacing: 20,
           children: ["Male", "Female", "Other"].map((gender) {
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Radio<String>(
-                  value: gender,
-                  activeColor: Colors.red,
-                  groupValue: selectedGender,
-                  onChanged: (val) =>
+            return InkWell( // Make the entire row tappable
+              onTap: () {
+                setState(() {
+                  selectedGender = gender;
+                  Provider.of<PatientFormProvider>(context, listen: false)
+                      .updateField('patient_gender', selectedGender);
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Radio<String>(
+                    value: gender,
+                    activeColor: Colors.red,
+                    groupValue: selectedGender,
+                    onChanged: (val) {
+                      // This onChanged is now optional since the onTap handles it.
+                      // It's still good practice to have it to ensure the Radio
+                      // button itself is still functional.
                       setState(() {
                         selectedGender = val!;
                         Provider.of<PatientFormProvider>(context, listen: false)
                             .updateField('patient_gender', selectedGender);
-                      }),
-                ),
-                Text(gender),
-              ],
+                      });
+                    },
+                  ),
+                  Text(gender),
+                ],
+              ),
             );
           }).toList(),
         ),
@@ -440,36 +467,54 @@ class _PatientDetailsState extends State<PatientDetails> {
           spacing: 20,
           runSpacing: -8,
           children: previousHistoryOptions.map((option) {
+            final isSelected = selectedHistory.contains(option);
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: selectedHistory.contains(option),
-                    activeColor: Colors.red,
-                    visualDensity: const VisualDensity(
-                      horizontal: -4,
-                      vertical: -4,
-                    ),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    onChanged: (val) {
-                      setState(() {
-                        if (val == true) {
-                          selectedHistory.add(option);
-                        } else {
-                          selectedHistory.remove(option);
-                          if (option == "OTHER") {
-                            otherHistoryController.clear();
+              child: InkWell( // Use InkWell to make the whole row tappable
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      selectedHistory.remove(option);
+                      if (option == "OTHER") {
+                        otherHistoryController.clear();
+                      }
+                    } else {
+                      selectedHistory.add(option);
+                    }
+                    Provider.of<PatientFormProvider>(context, listen: false)
+                        .updateField('previous_history', selectedHistory);
+                  });
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      value: isSelected,
+                      activeColor: Colors.red,
+                      visualDensity: const VisualDensity(
+                        horizontal: -4,
+                        vertical: -4,
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (val) {
+                        // This is now optional but kept for functionality.
+                        setState(() {
+                          if (val == true) {
+                            selectedHistory.add(option);
+                          } else {
+                            selectedHistory.remove(option);
+                            if (option == "OTHER") {
+                              otherHistoryController.clear();
+                            }
                           }
-                        }
-                        Provider.of<PatientFormProvider>(context, listen: false)
-                            .updateField('previous_history', selectedHistory);
-                      });
-                    },
-                  ),
-                  Text(option, style: const TextStyle(fontSize: 13)),
-                ],
+                          Provider.of<PatientFormProvider>(context, listen: false)
+                              .updateField('previous_history', selectedHistory);
+                        });
+                      },
+                    ),
+                    Text(option, style: const TextStyle(fontSize: 13)),
+                  ],
+                ),
               ),
             );
           }).toList(),
@@ -509,28 +554,43 @@ class _PatientDetailsState extends State<PatientDetails> {
         ),
         ...options.map((option) {
           final selected = primarySurveySelections[title]!.contains(option);
-          return Row(
-            children: [
-              Checkbox(
-                value: selected,
-                activeColor: Colors.red,
-                visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                onChanged: (bool? value) {
-                  setState(() {
-                    if (value == true) {
-                      primarySurveySelections[title]!.add(option);
-                    } else {
-                      primarySurveySelections[title]!.remove(option);
-                    }
-                    Provider.of<PatientFormProvider>(context, listen: false)
-                        .updateField('primary_survey', primarySurveySelections);
-                  });
-                },
-              ),
-              const SizedBox(width: 10),
-              Flexible(child: Text(option, style: const TextStyle(fontSize: 13))),
-            ],
+          return InkWell( // Wrap the row in InkWell
+            onTap: () {
+              setState(() {
+                if (selected) {
+                  primarySurveySelections[title]!.remove(option);
+                } else {
+                  primarySurveySelections[title]!.add(option);
+                }
+                Provider.of<PatientFormProvider>(context, listen: false)
+                    .updateField('primary_survey', primarySurveySelections);
+              });
+            },
+            child: Row(
+              children: [
+                Checkbox(
+                  value: selected,
+                  activeColor: Colors.red,
+                  visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onChanged: (bool? value) {
+                    // The InkWell handles the tap, so this is now optional.
+                    // You can keep it to ensure the checkbox itself is still tappable.
+                    setState(() {
+                      if (value == true) {
+                        primarySurveySelections[title]!.add(option);
+                      } else {
+                        primarySurveySelections[title]!.remove(option);
+                      }
+                      Provider.of<PatientFormProvider>(context, listen: false)
+                          .updateField('primary_survey', primarySurveySelections);
+                    });
+                  },
+                ),
+                const SizedBox(width: 10),
+                Flexible(child: Text(option, style: const TextStyle(fontSize: 13))),
+              ],
+            ),
           );
         }),
       ],
