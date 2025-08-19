@@ -219,11 +219,9 @@ class _TreatmentPageState extends State<TreatmentPage> {
                       controller: othersController,
                       decoration: const InputDecoration(
                         hintText: "Please specify",
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 8,
-                        ),
+                        filled: true,
+                        fillColor: Color(0xfff5f5f5),
+                        border: OutlineInputBorder(borderSide: BorderSide.none),
                       ),
                       onChanged: (value) {
                         _updateCheckboxProvider(title, options, othersController);
@@ -657,7 +655,7 @@ class _TreatmentPageState extends State<TreatmentPage> {
                   controller: glucoseController,
                   keyboardType: TextInputType.number,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                   ],
                   validator: (value) {
                     // If the field is empty, it's considered valid.
