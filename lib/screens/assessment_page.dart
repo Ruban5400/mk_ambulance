@@ -357,13 +357,31 @@ class _AssessmentPageState extends State<AssessmentPage> {
                   return newValue;
                 }),
               ];
-            } else if (['SPO2', 'PAIN SCORE', 'GCS', 'PUPIL SIZE (mm)'].contains(label.toUpperCase().trim())) {
+            } else if (['SPO2', 'PAIN SCORE', 'PUPIL SIZE (mm)'].contains(label.toUpperCase().trim())) {
               // These fields only need digits.
               keyboardType = TextInputType.number;
               formatters = [
                 FilteringTextInputFormatter.digitsOnly,
               ];
-            } else if (['RESPIRATORY RATE', 'PULSE RATE', 'BLOOD GLUCOSE'].contains(label.toUpperCase().trim())) {
+            }
+            else if (label.toUpperCase().trim() == 'GCS') {
+              // GCS validation
+              keyboardType = TextInputType.number;
+              formatters = [
+                FilteringTextInputFormatter.digitsOnly,
+              ];
+              validator = (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Enter a valid number';
+                }
+                final int? gcsScore = int.tryParse(value);
+                if (gcsScore == null || gcsScore < 0 || gcsScore > 15) {
+                  return 'Score must be between 0 and 15';
+                }
+                return null;
+              };
+            }
+            else if (['RESPIRATORY RATE', 'PULSE RATE'].contains(label.toUpperCase().trim())) {
               // These fields can have decimal points or commas, so they need a more permissive formatter.
               keyboardType = TextInputType.number;
               formatters = [
@@ -375,7 +393,7 @@ class _AssessmentPageState extends State<AssessmentPage> {
                 }
                 return null;
               };
-            } else if (label.toUpperCase().trim() == 'TEMPERATURE') {
+            } else if (label.toUpperCase().trim() == 'TEMPERATURE' || label.toUpperCase().trim() == 'BLOOD GLUCOSE') {
               // Temperature allows decimals
               keyboardType = TextInputType.numberWithOptions(decimal: true);
               formatters = [
@@ -395,6 +413,9 @@ class _AssessmentPageState extends State<AssessmentPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: TextFormField(
                   controller: controller,
+                  autovalidateMode: label.toUpperCase().trim() == 'GCS'
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
                   onChanged: (value) {
                     Provider.of<PatientFormProvider>(
                       context,
@@ -418,6 +439,8 @@ class _AssessmentPageState extends State<AssessmentPage> {
                         ? '°C'
                         : label == 'PAIN SCORE'
                         ? '/10'
+                        : label == 'GCS'
+                        ? '/15'
                         : null,
                     suffixIcon: label == 'DATE/TIME'
                         ? IconButton(

@@ -248,6 +248,10 @@ class PatientDetailsForm extends StatelessWidget {
                                 _buildInfoRow('Name:', details['Name'].toString()),
                               if (_hasValue(details, 'NRIC Number'))
                                 _buildInfoRow('NRIC Number:', details['NRIC Number'].toString()),
+                              if (_hasValue(details, 'Passport Country'))
+                                _buildInfoRow('Country:', details['Passport Country'].toString()),
+                              if (_hasValue(details, 'Passport Number'))
+                                _buildInfoRow('Passport Number:', details['Passport Number'].toString()),
                               if (_hasValue(details, 'patient_dob'))
                                 _buildInfoRow('Date of Birth:', details['patient_dob'].toString()),
                               if (_hasValue(details, 'Age'))
@@ -283,6 +287,11 @@ class PatientDetailsForm extends StatelessWidget {
                           _buildInfoRow('Name:', details['Name'].toString()),
                         if (_hasValue(details, 'NRIC Number'))
                           _buildInfoRow('NRIC Number:', details['NRIC Number'].toString()),
+                        if (_hasValue(details, 'Passport Country'))
+                          _buildInfoRow('Passport Country:', details['Passport Country'].toString()),
+                        if (_hasValue(details, 'Passport Number'))
+                          _buildInfoRow('Passport Number:', details['Passport Number'].toString()),
+
                         if (_hasValue(details, 'patient_dob'))
                           _buildInfoRow('Date of Birth:', details['patient_dob'].toString()),
                         if (_hasValue(details, 'Age'))

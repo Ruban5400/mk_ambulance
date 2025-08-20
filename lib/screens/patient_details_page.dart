@@ -1,3 +1,4 @@
+import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -22,16 +23,20 @@ class _PatientDetailsState extends State<PatientDetails> {
   DateTime? dob;
   final locationController = TextEditingController();
   final nameController = TextEditingController();
-  final nricController = TextEditingController();
   final dobController = TextEditingController();
   final ageController = TextEditingController();
   String selectedGender = "";
+  String idType = "";
+  final nricController = TextEditingController();
+  final countryController = TextEditingController();
+  final passportNumberController = TextEditingController();
   final complaintController = TextEditingController();
   final allergiesController = TextEditingController();
   final medicationController = TextEditingController();
   final nursesNotesController = TextEditingController();
   final otherHistoryController = TextEditingController();
   final referralTextController = TextEditingController();
+  String? selectedCountry;
 
   Map<String, List<String>> primarySurveySelections = {
     "Airway": [],
@@ -75,6 +80,7 @@ class _PatientDetailsState extends State<PatientDetails> {
       // Populate TextFields
       nameController.text = details['Name'] ?? '';
       nricController.text = details['NRIC Number'] ?? '';
+      passportNumberController.text = details['Passport Number'] ?? '';
       dobController.text = details['patient_dob'] ?? '';
       ageController.text = details['Age'] ?? '';
       locationController.text = details['Location'] ?? '';
@@ -84,6 +90,7 @@ class _PatientDetailsState extends State<PatientDetails> {
       nursesNotesController.text = details['Nurse\'s Notes'] ?? '';
       otherHistoryController.text = details['Other History'] ?? '';
       referralTextController.text = details['Referral Hospital'] ?? '';
+      selectedCountry = details['Passport Country'] ?? 'Select Country';
 
       // Populate Radio buttons
       if (details['referral_type'] != null) {
@@ -96,11 +103,24 @@ class _PatientDetailsState extends State<PatientDetails> {
           selectedGender = details['patient_gender']!;
         });
       }
+      if (details['NRIC Number'] != null) {
+        setState(() {
+          idType = 'NRIC';
+          // passportNumberController.text = '';
+        });
+      }
+
+      if (details['Passport Number'] != null) {
+        setState(() {
+          idType = 'Passport';
+        });
+      }
 
       // Populate Checkbox Groups
       if (details['primary_survey'] is Map<String, List<String>>) {
         setState(() {
-          primarySurveySelections = details['primary_survey'] as Map<String, List<String>>;
+          primarySurveySelections =
+              details['primary_survey'] as Map<String, List<String>>;
         });
       }
       if (details['previous_history'] is List<String>) {
@@ -114,7 +134,9 @@ class _PatientDetailsState extends State<PatientDetails> {
       if (details['patient_entry_date'] is String) {
         try {
           setState(() {
-            selectedDate = DateFormat('dd-MM-yyyy').parse(details['patient_entry_date']);
+            selectedDate = DateFormat(
+              'dd-MM-yyyy',
+            ).parse(details['patient_entry_date']);
           });
         } catch (e) {
           // Fallback to current date if parsing fails
@@ -126,7 +148,9 @@ class _PatientDetailsState extends State<PatientDetails> {
       if (details['patient_entry_time'] is String) {
         try {
           setState(() {
-            selectedTime = TimeOfDay.fromDateTime(DateFormat.jm().parse(details['patient_entry_time']));
+            selectedTime = TimeOfDay.fromDateTime(
+              DateFormat.jm().parse(details['patient_entry_time']),
+            );
           });
         } catch (e) {
           // Fallback to current time if parsing fails
@@ -169,12 +193,36 @@ class _PatientDetailsState extends State<PatientDetails> {
             const SizedBox(height: 16),
             _buildReferralTypeSection(),
             const SizedBox(height: 16),
-            _buildTextField("Location", locationController, "Location of incident"),
+            _buildTextField(
+              "Location",
+              locationController,
+              "Location of incident",
+            ),
             const SizedBox(height: 16),
             // Name and NRIC are now in a column.
             _buildTextField("Name", nameController, "Patient's full name"),
             const SizedBox(height: 16),
-            _buildTextField("NRIC Number", nricController, "Patient's NRIC number"),
+            _buildIdTypeSection(),
+            const SizedBox(height: 16),
+            if (idType == 'NRIC') ...[
+              const SizedBox(height: 16),
+              _buildTextField(
+                "NRIC Number",
+                nricController,
+                "Patient's NRIC number",
+              ),
+            ],
+            if (idType == 'Passport') ...[
+              const SizedBox(height: 16),
+              _selectCountry(),
+              const SizedBox(height: 16),
+              _buildTextField(
+                "Passport Number",
+                nricController,
+                "Patient's Passport number",
+              ),
+              const SizedBox(height: 16),
+            ],
             const SizedBox(height: 16),
             // DOB and Age are now in a column.
             _buildDatePickerField(),
@@ -193,17 +241,73 @@ class _PatientDetailsState extends State<PatientDetails> {
             _buildHeader("PRIMARY SURVEY", size: 18),
             const SizedBox(height: 8),
             // Checkbox columns are now stacked vertically on mobile.
-            _buildCheckBoxColumn("Airway", ["CLEAR", "OBSTRUCTED", "AGONAL", "ABSENT"]),
+            _buildCheckBoxColumn("Airway", [
+              "CLEAR",
+              "OBSTRUCTED",
+              "AGONAL",
+              "ABSENT",
+            ]),
             const SizedBox(height: 20),
             _buildCheckBoxColumn("Breathing", ["NORMAL", "SHALLOW", "ABSENT"]),
             const SizedBox(height: 20),
-            _buildCheckBoxColumn("Circulation", ["NORMAL", "PALE", "FLUSHED", "CYNOSED"]),
+            _buildCheckBoxColumn("Circulation", [
+              "NORMAL",
+              "PALE",
+              "FLUSHED",
+              "CYNOSED",
+            ]),
           ],
         ),
         const SizedBox(height: 24),
         _buildAllergiesMedicationSection(),
         const SizedBox(height: 24),
         _buildPreviousHistorySection(),
+      ],
+    );
+  }
+
+  Column _selectCountry() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Country'),
+        const SizedBox(height: 5),
+        GestureDetector(
+          onTap: () {
+            showCountryPicker(
+              context: context,
+              showPhoneCode: false,
+              onSelect: (Country country) {
+                setState(() {
+                  selectedCountry = country.name;
+                });
+
+                // Save into Provider
+                Provider.of<PatientFormProvider>(
+                  context,
+                  listen: false,
+                ).updateField('Passport Country', country.name);
+              },
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  selectedCountry ?? "Select Country",
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const Icon(Icons.arrow_drop_down),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -229,23 +333,68 @@ class _PatientDetailsState extends State<PatientDetails> {
               const SizedBox(height: 20),
               _buildReferralTypeSection(),
               const SizedBox(height: 20),
-              _buildTextField("Location", locationController, "Location of incident"),
+              _buildTextField(
+                "Location",
+                locationController,
+                "Location of incident",
+              ),
               const SizedBox(height: 20),
               // Name and NRIC are side by side.
               Row(
                 children: [
-                  Expanded(child: _buildTextField("Name", nameController, "Patient's full name")),
+                  Expanded(
+                    child: _buildTextField(
+                      "Name",
+                      nameController,
+                      "Patient's full name",
+                    ),
+                  ),
                   const SizedBox(width: 20),
-                  Expanded(child: _buildTextField("NRIC Number", nricController, "Patient's NRIC number")),
+                  Expanded(child: _buildIdTypeSection()),
+                  // const SizedBox(width: 20),
+                  // Expanded(child: _buildTextField("NRIC Number", nricController, "Patient's NRIC number")),
                 ],
               ),
+              if (idType == 'NRIC') ...[
+                const SizedBox(height: 20),
+                _buildTextField(
+                  "NRIC Number",
+                  nricController,
+                  "Patient's NRIC number",
+                ),
+              ],
+              if (idType == 'Passport') ...[
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+
+                    Expanded(child: _selectCountry()),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: _buildTextField(
+                        "Passport Number",
+                        passportNumberController,
+                        "Patient's Passport number",
+                      ),
+                    ),
+
+                  ],
+                ),
+              ],
+
               const SizedBox(height: 20),
               // DOB and Age are side by side.
               Row(
                 children: [
                   Expanded(child: _buildDatePickerField()),
                   const SizedBox(width: 20),
-                  Expanded(child: _buildTextField("Age", ageController, "Patient's age")),
+                  Expanded(
+                    child: _buildTextField(
+                      "Age",
+                      ageController,
+                      "Patient's age",
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -264,11 +413,31 @@ class _PatientDetailsState extends State<PatientDetails> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _buildCheckBoxColumn("Airway", ["CLEAR", "OBSTRUCTED", "AGONAL", "ABSENT"])),
+                  Expanded(
+                    child: _buildCheckBoxColumn("Airway", [
+                      "CLEAR",
+                      "OBSTRUCTED",
+                      "AGONAL",
+                      "ABSENT",
+                    ]),
+                  ),
                   const SizedBox(width: 40),
-                  Expanded(child: _buildCheckBoxColumn("Breathing", ["NORMAL", "SHALLOW", "ABSENT"])),
+                  Expanded(
+                    child: _buildCheckBoxColumn("Breathing", [
+                      "NORMAL",
+                      "SHALLOW",
+                      "ABSENT",
+                    ]),
+                  ),
                   const SizedBox(width: 40),
-                  Expanded(child: _buildCheckBoxColumn("Circulation", ["NORMAL", "PALE", "FLUSHED", "CYNOSED"])),
+                  Expanded(
+                    child: _buildCheckBoxColumn("Circulation", [
+                      "NORMAL",
+                      "PALE",
+                      "FLUSHED",
+                      "CYNOSED",
+                    ]),
+                  ),
                 ],
               ),
             ],
@@ -284,7 +453,10 @@ class _PatientDetailsState extends State<PatientDetails> {
 
   // --- Reusable Widget Builders ---
 
-  Widget _buildDetailsContainer({required double padding, required List<Widget> children}) {
+  Widget _buildDetailsContainer({
+    required double padding,
+    required List<Widget> children,
+  }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: padding, vertical: 20),
       decoration: BoxDecoration(
@@ -301,10 +473,7 @@ class _PatientDetailsState extends State<PatientDetails> {
   Widget _buildHeader(String title, {double size = 20}) {
     return Text(
       title,
-      style: GoogleFonts.poppins(
-        fontSize: size,
-        fontWeight: FontWeight.w600,
-      ),
+      style: GoogleFonts.poppins(fontSize: size, fontWeight: FontWeight.w600),
     );
   }
 
@@ -317,7 +486,8 @@ class _PatientDetailsState extends State<PatientDetails> {
         Wrap(
           spacing: 20,
           children: referralOptions.map((type) {
-            return InkWell( // Use InkWell to make the whole area tappable
+            return InkWell(
+              // Use InkWell to make the whole area tappable
               onTap: () {
                 setState(() {
                   referralType = type;
@@ -372,12 +542,15 @@ class _PatientDetailsState extends State<PatientDetails> {
         Wrap(
           spacing: 20,
           children: ["Male", "Female", "Other"].map((gender) {
-            return InkWell( // Make the entire row tappable
+            return InkWell(
+              // Make the entire row tappable
               onTap: () {
                 setState(() {
                   selectedGender = gender;
-                  Provider.of<PatientFormProvider>(context, listen: false)
-                      .updateField('patient_gender', selectedGender);
+                  Provider.of<PatientFormProvider>(
+                    context,
+                    listen: false,
+                  ).updateField('patient_gender', selectedGender);
                 });
               },
               child: Row(
@@ -393,12 +566,56 @@ class _PatientDetailsState extends State<PatientDetails> {
                       // button itself is still functional.
                       setState(() {
                         selectedGender = val!;
-                        Provider.of<PatientFormProvider>(context, listen: false)
-                            .updateField('patient_gender', selectedGender);
+                        Provider.of<PatientFormProvider>(
+                          context,
+                          listen: false,
+                        ).updateField('patient_gender', selectedGender);
                       });
                     },
                   ),
                   Text(gender),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIdTypeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Id Type"),
+        const SizedBox(height: 5),
+        Wrap(
+          spacing: 20,
+          children: ["NRIC", "Passport"].map((id) {
+            return InkWell(
+              // Make the entire row tappable
+              onTap: () {
+                setState(() {
+                  idType = id;
+                });
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Radio<String>(
+                    value: id,
+                    activeColor: Colors.red,
+                    groupValue: idType,
+                    onChanged: (val) {
+                      // This onChanged is now optional since the onTap handles it.
+                      // It's still good practice to have it to ensure the Radio
+                      // button itself is still functional.
+                      setState(() {
+                        idType = val!;
+                      });
+                    },
+                  ),
+                  Text(id),
                 ],
               ),
             );
@@ -421,13 +638,13 @@ class _PatientDetailsState extends State<PatientDetails> {
             hintText: "Describe the chief complaint",
             filled: true,
             fillColor: Colors.grey.shade100,
-            border: const OutlineInputBorder(
-              borderSide: BorderSide.none,
-            ),
+            border: const OutlineInputBorder(borderSide: BorderSide.none),
           ),
           onChanged: (value) {
-            Provider.of<PatientFormProvider>(context, listen: false)
-                .updateField('chief_complain', value);
+            Provider.of<PatientFormProvider>(
+              context,
+              listen: false,
+            ).updateField('chief_complain', value);
           },
         ),
       ],
@@ -470,7 +687,8 @@ class _PatientDetailsState extends State<PatientDetails> {
             final isSelected = selectedHistory.contains(option);
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
-              child: InkWell( // Use InkWell to make the whole row tappable
+              child: InkWell(
+                // Use InkWell to make the whole row tappable
                 onTap: () {
                   setState(() {
                     if (isSelected) {
@@ -481,8 +699,10 @@ class _PatientDetailsState extends State<PatientDetails> {
                     } else {
                       selectedHistory.add(option);
                     }
-                    Provider.of<PatientFormProvider>(context, listen: false)
-                        .updateField('previous_history', selectedHistory);
+                    Provider.of<PatientFormProvider>(
+                      context,
+                      listen: false,
+                    ).updateField('previous_history', selectedHistory);
                   });
                 },
                 child: Row(
@@ -507,8 +727,10 @@ class _PatientDetailsState extends State<PatientDetails> {
                               otherHistoryController.clear();
                             }
                           }
-                          Provider.of<PatientFormProvider>(context, listen: false)
-                              .updateField('previous_history', selectedHistory);
+                          Provider.of<PatientFormProvider>(
+                            context,
+                            listen: false,
+                          ).updateField('previous_history', selectedHistory);
                         });
                       },
                     ),
@@ -547,14 +769,12 @@ class _PatientDetailsState extends State<PatientDetails> {
       children: [
         Text(
           title,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14),
         ),
         ...options.map((option) {
           final selected = primarySurveySelections[title]!.contains(option);
-          return InkWell( // Wrap the row in InkWell
+          return InkWell(
+            // Wrap the row in InkWell
             onTap: () {
               setState(() {
                 if (selected) {
@@ -562,8 +782,10 @@ class _PatientDetailsState extends State<PatientDetails> {
                 } else {
                   primarySurveySelections[title]!.add(option);
                 }
-                Provider.of<PatientFormProvider>(context, listen: false)
-                    .updateField('primary_survey', primarySurveySelections);
+                Provider.of<PatientFormProvider>(
+                  context,
+                  listen: false,
+                ).updateField('primary_survey', primarySurveySelections);
               });
             },
             child: Row(
@@ -571,7 +793,10 @@ class _PatientDetailsState extends State<PatientDetails> {
                 Checkbox(
                   value: selected,
                   activeColor: Colors.red,
-                  visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                  visualDensity: const VisualDensity(
+                    horizontal: -4,
+                    vertical: -4,
+                  ),
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   onChanged: (bool? value) {
                     // The InkWell handles the tap, so this is now optional.
@@ -582,13 +807,17 @@ class _PatientDetailsState extends State<PatientDetails> {
                       } else {
                         primarySurveySelections[title]!.remove(option);
                       }
-                      Provider.of<PatientFormProvider>(context, listen: false)
-                          .updateField('primary_survey', primarySurveySelections);
+                      Provider.of<PatientFormProvider>(
+                        context,
+                        listen: false,
+                      ).updateField('primary_survey', primarySurveySelections);
                     });
                   },
                 ),
                 const SizedBox(width: 10),
-                Flexible(child: Text(option, style: const TextStyle(fontSize: 13))),
+                Flexible(
+                  child: Text(option, style: const TextStyle(fontSize: 13)),
+                ),
               ],
             ),
           );
@@ -607,10 +836,10 @@ class _PatientDetailsState extends State<PatientDetails> {
     if (picked != null) {
       setState(() {
         selectedDate = picked;
-        Provider.of<PatientFormProvider>(
-          context,
-          listen: false,
-        ).updateField('patient_entry_date', DateFormat('dd-MM-yyyy').format(selectedDate));
+        Provider.of<PatientFormProvider>(context, listen: false).updateField(
+          'patient_entry_date',
+          DateFormat('dd-MM-yyyy').format(selectedDate),
+        );
       });
     }
   }
@@ -642,11 +871,22 @@ class _PatientDetailsState extends State<PatientDetails> {
       setState(() {
         dob = picked;
         dobController.text =
-        "${dob!.day.toString().padLeft(2, '0')}-${dob!.month.toString().padLeft(2, '0')}-${dob!.year}";
+            "${dob!.day.toString().padLeft(2, '0')}-${dob!.month.toString().padLeft(2, '0')}-${dob!.year}";
+        final today = DateTime.now();
+        int age = today.year - dob!.year;
+        if (today.month < dob!.month ||
+            (today.month == dob!.month && today.day < dob!.day)) {
+          age--;
+        }
         Provider.of<PatientFormProvider>(
           context,
           listen: false,
         ).updateField('patient_dob', dobController.text);
+        ageController.text = age.toString();
+        Provider.of<PatientFormProvider>(
+          context,
+          listen: false,
+        ).updateField('Age', age);
       });
     }
   }
@@ -669,7 +909,7 @@ class _PatientDetailsState extends State<PatientDetails> {
           ),
           controller: TextEditingController(
             text:
-            "${selectedDate.day.toString().padLeft(2, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.year}",
+                "${selectedDate.day.toString().padLeft(2, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.year}",
           ),
         ),
       ],
@@ -709,13 +949,8 @@ class _PatientDetailsState extends State<PatientDetails> {
           readOnly: true,
           onTap: pickDOB,
           decoration: InputDecoration(
-            suffixIcon: const Icon(
-              Icons.calendar_today,
-              size: 18,
-            ),
-            border: const OutlineInputBorder(
-              borderSide: BorderSide.none,
-            ),
+            suffixIcon: const Icon(Icons.calendar_today, size: 18),
+            border: const OutlineInputBorder(borderSide: BorderSide.none),
             filled: true,
             fillColor: Colors.grey.shade100,
             hintText: 'dd-mm-yyyy',
@@ -726,11 +961,11 @@ class _PatientDetailsState extends State<PatientDetails> {
   }
 
   Widget _buildTextField(
-      String label,
-      TextEditingController controller,
-      String hint, {
-        int maxLines = 1,
-      }) {
+    String label,
+    TextEditingController controller,
+    String hint, {
+    int maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -739,7 +974,9 @@ class _PatientDetailsState extends State<PatientDetails> {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
-          keyboardType: label == 'Age' ? TextInputType.number : TextInputType.text,
+          keyboardType: label == 'Age'
+              ? TextInputType.number
+              : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,

@@ -267,6 +267,16 @@ class SummaryPage extends StatelessWidget {
                             'NRIC Number:',
                             details['NRIC Number'].toString(),
                           ),
+                        if (_hasValue(details, 'Passport Country'))
+                          _buildPdfInfoRow(
+                            'Country:',
+                            details['Passport Country'].toString(),
+                          ),
+                        if (_hasValue(details, 'Passport Number'))
+                          _buildPdfInfoRow(
+                            'Passport Number:',
+                            details['Passport Number'].toString(),
+                          ),
                         if (_hasValue(details, 'patient_dob'))
                           _buildPdfInfoRow(
                             'Date of Birth:',
