@@ -596,6 +596,7 @@ class _TreatmentPageState extends State<TreatmentPage> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                   ],
+                  // validation removed
                   // validator: (value) {
                   //   // If the field is empty, it's considered valid.
                   //   if (value == null || value.isEmpty) {
