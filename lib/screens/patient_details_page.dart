@@ -27,6 +27,7 @@ class _PatientDetailsState extends State<PatientDetails> {
   final ageController = TextEditingController();
   String selectedGender = "";
   String idType = "";
+  String consentForm = "";
   final nricController = TextEditingController();
   final countryController = TextEditingController();
   final passportNumberController = TextEditingController();
@@ -110,6 +111,13 @@ class _PatientDetailsState extends State<PatientDetails> {
         });
       }
 
+      if (details['consent'] != null) {
+        setState(() {
+          consentForm = details['consent'];
+          // passportNumberController.text = '';
+        });
+      }
+
       if (details['Passport Number'] != null) {
         setState(() {
           idType = 'Passport';
@@ -181,6 +189,8 @@ class _PatientDetailsState extends State<PatientDetails> {
     return Column(
       children: [
         // Using a padding that is suitable for mobile screens.
+        _cosentApproval(),
+        const SizedBox(height: 24),
         _buildDetailsContainer(
           padding: 16.0,
           children: [
@@ -317,6 +327,8 @@ class _PatientDetailsState extends State<PatientDetails> {
       constraints: const BoxConstraints(maxWidth: 1000),
       child: Column(
         children: [
+          _cosentApproval(),
+          const SizedBox(height: 24),
           _buildDetailsContainer(
             padding: 20.0,
             children: [
@@ -367,7 +379,6 @@ class _PatientDetailsState extends State<PatientDetails> {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-
                     Expanded(child: _selectCountry()),
                     const SizedBox(width: 20),
                     Expanded(
@@ -377,7 +388,6 @@ class _PatientDetailsState extends State<PatientDetails> {
                         "Patient's Passport number",
                       ),
                     ),
-
                   ],
                 ),
               ],
@@ -446,6 +456,88 @@ class _PatientDetailsState extends State<PatientDetails> {
           _buildAllergiesMedicationSection(),
           const SizedBox(height: 30),
           _buildPreviousHistorySection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _cosentApproval() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        border: Border.all(color: Colors.grey, width: 1.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'For quality and safety improvement, our medical team uses a body-worn camera to record the treatment process. This recording will be kept confidential, used only for training and service improvement purposes, and not shared publicly. Do we have your permission to record during this treatment?',
+            textAlign: TextAlign.justify,
+          ),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      consentForm = 'Yes';
+                      Provider.of<PatientFormProvider>(
+                        context,
+                        listen: false,
+                      ).updateField('consent', 'Yes');
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: consentForm == 'Yes'
+                        ? Colors.green
+                        : Colors.white,
+                    side: BorderSide(
+                      color: consentForm == 'Yes' ? Colors.green : Colors.grey,
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Text(
+                    'Yes',
+                    style: TextStyle(
+                      color: consentForm == 'Yes' ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      consentForm = 'No';
+                      Provider.of<PatientFormProvider>(
+                        context,
+                        listen: false,
+                      ).updateField('consent', 'No');
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: consentForm == 'No'
+                        ? Colors.red
+                        : Colors.white,
+                    side: BorderSide(
+                      color: consentForm == 'No' ? Colors.red : Colors.grey,
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Text(
+                    'No',
+                    style: TextStyle(
+                      color: consentForm == 'No' ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

@@ -175,7 +175,13 @@ class SummaryPage extends StatelessWidget {
           pw.Expanded(
             flex: 1,
             child: pw.Center(
-              child: pw.Text(i < entry.value.length ? entry.value[i] : ''),
+              child: pw.Text(
+                i < entry.value.length
+                    ? entry.key == 'GCS'
+                          ? '${entry.value[i]}/15'
+                          : entry.value[i]
+                    : '',
+              ),
             ),
           ),
         );
@@ -235,15 +241,18 @@ class SummaryPage extends StatelessWidget {
           return [
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Image(pw.MemoryImage(imageBytes), height: 50),
-              ],
+              children: [pw.Image(pw.MemoryImage(imageBytes), height: 50)],
             ),
             pw.SizedBox(height: 10),
-            pw.Center(child: pw.Text(
-              'Patient Information',
-              style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-            )),
+            pw.Center(
+              child: pw.Text(
+                'Patient Information',
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ),
             pw.SizedBox(height: 10),
             pw.Container(
               padding: const pw.EdgeInsets.symmetric(
@@ -330,6 +339,36 @@ class SummaryPage extends StatelessWidget {
                 ],
               ),
             ),
+            pw.SizedBox(height: 10),
+            if (_hasValue(details, 'consent'))
+              pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(vertical: 4.0),
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Expanded(
+                      child: pw.RichText(
+                        text: pw.TextSpan(
+                          children: [
+                            pw.TextSpan(
+                              text:
+                                  'For quality and safety improvement, our medical team uses a body-worn camera to record the treatment process. This recording will be kept confidential, used only for training and service improvement purposes, and not shared publicly. Do we have your permission to record during this treatment? ',
+                            ),
+                            pw.TextSpan(
+                              text: details['consent'].toString() == 'Yes'
+                                  ? 'Yes, you have my permission.'
+                                  : 'No, I do not give permission.',
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (_hasValue(details, 'chief_complain')) ...[
               pw.SizedBox(height: 20),
               _buildPdfSectionHeader('Chief Complaint'),
@@ -350,10 +389,10 @@ class SummaryPage extends StatelessWidget {
                         children: [
                           _buildPdfSectionHeader('Primary Survey'),
                           if (details['primary_survey']
-                          is Map<String, List<String>>)
+                              is Map<String, List<String>>)
                             _buildPdfPrimarySurvey(
                               details['primary_survey']
-                              as Map<String, List<String>>,
+                                  as Map<String, List<String>>,
                             ),
                         ],
                       ),
@@ -671,7 +710,11 @@ class SummaryPage extends StatelessWidget {
 
     // Create a temporary file to hold the PDF bytes.
     // This is required by the share_plus package.
-    final xFile = XFile.fromData(pdfBytes, mimeType: 'application/pdf', name: fileName);
+    final xFile = XFile.fromData(
+      pdfBytes,
+      mimeType: 'application/pdf',
+      name: fileName,
+    );
 
     await Share.shareXFiles(
       [xFile],
