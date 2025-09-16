@@ -43,6 +43,8 @@ dependencies:
   web: ^1.1.1
   printing: ^5.14.2
   pdf: ^3.11.3
+  share_plus: ^11.1.0
+  country_picker: ^2.0.27
 
 dev_dependencies:
   flutter_test:

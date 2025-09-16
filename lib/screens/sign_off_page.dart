@@ -185,44 +185,56 @@ class _SignOffPageState extends State<SignOffPage> {
   }
 
   Widget _buildCheckboxTile(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min, // Use MainAxisSize.min to prevent the row from taking full width
-        children: [
-          Checkbox(
-            value: options[label],
-            onChanged: (bool? value) {
-              setState(() {
-                options[label] = value ?? false;
-                // Corrected line: removed the exclusion of 'Others'
-                final selectedDocuments = options.entries
-                    .where((e) => e.value)
-                    .map((e) => e.key)
-                    .toList();
-                Provider.of<PatientFormProvider>(context, listen: false)
-                    .updateField('documents_provided', selectedDocuments);
-              });
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
+    return InkWell( // Wrap the Padding with InkWell
+      onTap: () {
+        setState(() {
+          options[label] = !options[label]!; // Toggle the value
+          final selectedDocuments = options.entries
+              .where((e) => e.value)
+              .map((e) => e.key)
+              .toList();
+          Provider.of<PatientFormProvider>(context, listen: false)
+              .updateField('documents_provided', selectedDocuments);
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Checkbox(
+              value: options[label],
+              onChanged: (bool? value) {
+                setState(() {
+                  options[label] = value ?? false;
+                  final selectedDocuments = options.entries
+                      .where((e) => e.value)
+                      .map((e) => e.key)
+                      .toList();
+                  Provider.of<PatientFormProvider>(context, listen: false)
+                      .updateField('documents_provided', selectedDocuments);
+                });
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              side: BorderSide(color: Colors.red.shade800),
+              activeColor: Colors.red.shade800,
+              visualDensity: VisualDensity.compact,
             ),
-            side: BorderSide(color: Colors.red.shade800),
-            activeColor: Colors.red.shade800,
-            visualDensity: VisualDensity.compact,
-          ),
-          const SizedBox(width: 8),
-          Flexible( // Wrap Text in Flexible to prevent overflow
-            child: Text(
-              label,
-              style: GoogleFonts.roboto(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.roboto(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
