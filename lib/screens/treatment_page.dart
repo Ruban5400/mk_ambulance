@@ -433,25 +433,25 @@ class _TreatmentPageState extends State<TreatmentPage> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        validator: (value) {
-                          // If the field is empty, it's considered valid.
-                          if (value == null || value.isEmpty) {
-                            return null;
-                          }
-                          final number = int.tryParse(value);
-
-                          // If parsing fails, it's not a valid number.
-                          if (number == null) {
-                            return 'Please enter a valid number.';
-                          }
-
-                          // Check if the number is within the required range.
-                          if (number < 12 || number > 20) {
-                            return 'Value must be between 12 and 20.';
-                          }
-
-                          return null;
-                        },
+                        // validator: (value) {
+                        //   // If the field is empty, it's considered valid.
+                        //   if (value == null || value.isEmpty) {
+                        //     return null;
+                        //   }
+                        //   final number = int.tryParse(value);
+                        //
+                        //   // If parsing fails, it's not a valid number.
+                        //   if (number == null) {
+                        //     return 'Please enter a valid number.';
+                        //   }
+                        //
+                        //   // Check if the number is within the required range.
+                        //   if (number < 12 || number > 20) {
+                        //     return 'Value must be between 12 and 20.';
+                        //   }
+                        //
+                        //   return null;
+                        // },
                       ),
                     ],
                   ),
@@ -596,27 +596,27 @@ class _TreatmentPageState extends State<TreatmentPage> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                   ],
-                  validator: (value) {
-                    // If the field is empty, it's considered valid.
-                    if (value == null || value.isEmpty) {
-                      return null;
-                    }
-
-                    // Attempt to parse the string to a double.
-                    final number = double.tryParse(value);
-
-                    // If parsing fails, it's not a valid number.
-                    if (number == null) {
-                      return 'Please enter a valid temperature.';
-                    }
-
-                    // Check if the number is within the required range (35.0 to 38.0).
-                    if (number < 35.0 || number > 38.0) {
-                      return 'Temperature must be between 35.0 and 38.0.';
-                    }
-                    // If all checks pass, the input is valid.
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   // If the field is empty, it's considered valid.
+                  //   if (value == null || value.isEmpty) {
+                  //     return null;
+                  //   }
+                  //
+                  //   // Attempt to parse the string to a double.
+                  //   final number = double.tryParse(value);
+                  //
+                  //   // If parsing fails, it's not a valid number.
+                  //   if (number == null) {
+                  //     return 'Please enter a valid temperature.';
+                  //   }
+                  //
+                  //   // Check if the number is within the required range (35.0 to 38.0).
+                  //   if (number < 35.0 || number > 38.0) {
+                  //     return 'Temperature must be between 35.0 and 38.0.';
+                  //   }
+                  //   // If all checks pass, the input is valid.
+                  //   return null;
+                  // },
                 )),
                 const SizedBox(width: 20),
                 Expanded(child: _buildTextField(
